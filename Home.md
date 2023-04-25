@@ -1,6 +1,6 @@
 # Meshtastic <=> Matrix Relay
 
-Meshtastic <=> Matrix Relay is a powerful and easy-to-use relay between Meshtastic devices and Matrix chat rooms, allowing seamless communication across platforms. This opens the door for bridging Meshtastic devices to many other platforms. In this wiki entry, we will cover the following topics:
+Meshtastic <=> Matrix Relay is a powerful and easy-to-use relay between Meshtastic devices and Matrix chat rooms, allowing seamless communication across platforms. This opens the door for bridging Meshtastic devices to [many other platforms](https://matrix.org/bridges/). In this wiki entry, we will cover the following topics:
 
 1. Introduction to Meshtastic <=> Matrix Relay
 2. Key concepts
