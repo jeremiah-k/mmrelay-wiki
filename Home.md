@@ -51,7 +51,7 @@ Meshtastic <=> Matrix Relay can be used to provide communication in remote areas
 
 ### ~~Emergency Response~~ 
 
-_Disclaimer: This is a hypothetical situation. Neither Matrix, nor Meshtastic should take the place of traditional emergency services. We do not recommend relying on these systems in an emergency._
+_Disclaimer: This is a hypothetical situation. Neither Matrix, Meshtastic, nor M<>M Relay should be expected to take the place of traditional emergency services. We do not recommend relying on these systems in an emergency. We accept no responsibility if you attempt to use these systems in an emergency situation._
 
 ~~Meshtastic <=> Matrix Relay can be used for emergency response communications. In situations where traditional communication channels are unavailable or unreliable, Meshtastic devices can be used to form a mesh network. The Meshtastic <=> Matrix Relay can then be used to bridge the mesh network to a Matrix chat room, allowing emergency responders to communicate with each other and coordinate their efforts.~~
 
