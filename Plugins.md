@@ -1,7 +1,3 @@
-M<>M Relay, at its core relays messages in this fashion:
+M<>M Relay functions as a message relay between Meshnets and Matrix, allowing for seamless communication across platforms. However, we're also working on a plugin system that expands the relay's capabilities. While this framework is still in development, our initial plans include implementing a `!health` command to check the status of a Meshnet and a `!seen` command to retrieve the last known location of a user or users within a Meshnet, we're also looking into ways to make use of the location data produced by the meshnets. This is just the start. We aim to introduce even more plugins in the future.
 
-`Meshnet <-> Matrix <-> Meshnet(s)`
-
-Through a plugins system, we are able to extend M<>M Relay's functionality.  The plugin framework is still in development, but we plan to support checking a Mesh's health status via a `!health` command, a `!seen` command that checks the database and reports when we last saw a certain user or users from a meshnet, and much more to come.
-
-We invite everyone to contribute their own plugins too.
+We also encourage community members to contribute their own plugins to the project, which can be easily integrated into the existing framework to enhance the relay's functionality.
