@@ -23,7 +23,7 @@ Meshtastic is an open-source, decentralized, and affordable mesh network platfor
 
 ### Matrix
 
-Matrix is an open standard for decentralized communication. It is designed to provide a secure and decentralized messaging platform that is interoperable across different services and devices. Matrix is used by a wide range of platforms, including Riot, Element, and Jitsi.
+Matrix is an open standard for decentralized communication. It is designed to provide a secure and decentralized messaging platform that is interoperable across different services and devices. It's often used an open-source alternative to Telegram or Discord, but because of its very open nature there is an incredibly wide range of applications that can built on top of it.
 
 ### Meshtastic <=> Matrix Relay
 
