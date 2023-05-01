@@ -1,5 +1,8 @@
-If you're new to Matrix (or even if you're not!), we invite you to join our project's room at [#mmrelay:matrix.org](https://matrix.to/#/#mmrelay:matrix.org).
+If you're new to Matrix (or even if you're not!), we invite you to join our project's room.
 
-By following the link above, you'll be guided through the process of installing a Matrix client of your choice and directed to our main room. Although an Element web client is available, we recommend using standalone versions for a smoother experience.
+First, download and install the [Element client](https://element.io/download) of your choice.
+(_Although an Element web client is available, we recommend using standalone versions for a smoother experience._)
 
-These initial steps will acquaint you with Matrix's functionality and help provide a better understanding of the relay's configuration options. Once you've joined our project's room, we'll be able to assist you further.
+Once installed, click [this link](https://matrix.to/#/#mmrelay:matrix.org) and then click "Continue" under the Element section and you'll be guided to our room.
+
+These initial steps will help you get familiar with Matrix's functionality, which in turn will help provide a better understanding of the relay's configuration options. Once you've joined our project's room, we'll be able to assist you further.
