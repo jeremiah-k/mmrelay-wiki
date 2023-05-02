@@ -6,9 +6,3 @@ First, download and install the [Element client](https://element.io/download) fo
 Once Element is installed, follow [this link](https://matrix.to/#/#mmrelay:matrix.org) and then click "Continue" under the Element section and you'll be guided to our room.
 
 These initial steps will help you get familiar with Matrix's basic functionality, which in turn will help provide a better understanding of the relay's configuration options. Once you've joined our project's room, we'll be able to help you further.<p><p>
-
-_Alternatively, if you have problem with the matrix.to link above, once Element is installed you can click the "Explore Rooms" button located in the top left corner of Element, next to the "Search" box:_<br>
-![Screenshot from 2023-05-01 19-26-31](https://user-images.githubusercontent.com/17190268/235589029-f99673cf-3ee6-4f10-bc43-f27431259171.png)
-
-
-_And then the room directory will pop up, search for "mmrelay" and when our room appears, click "Join"_
