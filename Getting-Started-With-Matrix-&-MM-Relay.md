@@ -11,4 +11,4 @@ _Alternatively, if you have problem with the matrix.to link above, once Element 
 ![Screenshot from 2023-05-01 19-06-09](https://user-images.githubusercontent.com/17190268/235554430-54d4db48-3352-4355-abae-da13140b9ed9.png)
 
 _And then search for "mmrelay" and click "Join":_<br>
-<img src="https://user-images.githubusercontent.com/17190268/235552743-7b3327f5-3698-4fbf-9721-78a501844e69.png" width=75% height=75%>
+<img src="https://user-images.githubusercontent.com/17190268/235558594-0a21c2d3-5511-415b-93a0-80f24a6e3f00.png" width=75% height=75%>
