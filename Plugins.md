@@ -26,6 +26,16 @@ plugins:
     active: true
 ```
 
+When a plugin is activated they appear in the startup logs. The `map`, `ping` and `weather` plugins are loaded in the following example,
+
+```
+2023-05-13 23:20:51 -0400 INFO:Meshtastic:Connecting to host meshtastic.local ...
+2023-05-13 23:20:54 -0400 INFO:Plugins:Loaded map
+2023-05-13 23:20:54 -0400 INFO:Plugins:Loaded ping
+2023-05-13 23:20:54 -0400 INFO:Plugins:Loaded weather
+2023-05-13 23:20:54 -0400 INFO:Matrix:Connecting ...
+```
+
 ## How to use plugin commands
 
 A plugin is called by sending its command to the M<>M Relay bot.
