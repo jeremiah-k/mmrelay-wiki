@@ -16,7 +16,9 @@ We also encourage community members to contribute their own plugins to the proje
 
 ## How to enable a plugin
 
-In order to use a plugin it must be added to the plugins section of the configuration file `config.yaml` file and given an `active:true` value. For example, to enable the Ping plugin ensure the following is set in the configuration file:
+In order to use a plugin it must be added to the plugins section of the configuration file `config.yaml` file and given an `active:true` value.
+
+For example, to enable the Ping plugin ensure the following is set in the configuration file:
 
 ```
 plugins:
