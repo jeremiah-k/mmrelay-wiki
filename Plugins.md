@@ -1,5 +1,3 @@
-# Plugins
-
 M<>M Relay supports a plugin system to expand its capabilities.
 
 We also encourage community members to contribute their own plugins to the project, which can be easily integrated into the existing framework to enhance the relay's functionality.
