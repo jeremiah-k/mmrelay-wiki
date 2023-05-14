@@ -11,7 +11,7 @@ We also encourage community members to contribute their own plugins to the proje
 | `telemetry` | `!batteryLevel` | yes            | no            | Graph of avg Mesh battery level for last 12 hours                  |
 | `telemetry` | `!voltage`      | yes            | no            | Graph of avg Mesh battery voltage for last 12 hours                |
 | `telemetry` | `!airUtilTx`    | yes            | no            | Graph of avg Mesh airUtilTx for last 12 hours                      |
-| `mesh_relay`| N/A             | yes            | yes           | Relays radio packets between a Mesh and a Matrix room              |
+| `mesh_relay`|                 | yes            | yes           | Relays radio packets between a Mesh and a Matrix room              |
 | `map`       | `!map`          | yes            | no            | Map of mesh radio nodes. Supports `zoom` and `size` to customize   |
 
 ## How to enable a plugin
@@ -33,3 +33,14 @@ A plugin is called by sending its command to the M<>M Relay bot.
 For example to call the map plugin of the `Meshtastic Bot` message it `!map`:
 
 ![image](https://github.com/geoffwhittington/meshtastic-matrix-relay/assets/1770544/92e045eb-9989-42e2-b9bf-f8fb839661de)
+
+## Map plugin
+
+The Map plugin displays mesh radio nodes on a world map. Node locations are randomly placed up to 10km away from their actual location in order to hide their true location. By default the generated map has `size` width=1000px and height=1000px. It has a `zoom` value of 8. Lower zoom values show less detail and more of the Earth.
+
+Here are some examples of how to use the plugin:
+
+* `!map`: Shows the radio nodes on a world map with a zoom of `8` default size of width=`1000`px height=`1000`px
+* `!map size=800,900`: Shows the radio nodes on a world map of size width=`800`px height=`900`px
+* `!map zoom=5 size=800,900`: Shows the radio nodes on a world map zoomed out. It has size width=`800`px height=`900`px
+
