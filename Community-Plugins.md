@@ -32,7 +32,7 @@ These functions allow you to define how your plugin will handle incoming message
 
 ## Creating Your First Plugin
 
-Let's create a simple example plugin to get started. We will create a plugin named **HelloWorld** that logs "Hello world" when it receives a message from either Meshtastic or Matrix.
+Let's create a simple example plugin to get started. We will create a plugin named **HelloWorld** that logs "Hello world" when it receives a message from either Meshtastic or Matrix (this basic example will also log for every Meshtastic packet received, not just TEXT_MESSAGE_APP packets).
 
 ### Step 1: Set Up Your Plugin Directory
 
