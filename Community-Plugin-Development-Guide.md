@@ -126,11 +126,14 @@ You can also create specific commands for handling messages coming from the Mesh
 
 ```
 async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
-    # Assuming the packet contains a text command
-    if formatted_message.strip().lower() == "!ping":
-        self.logger.debug(f"Received ping command from {longname}")
-        # Respond to the ping command
-        await self.send_mesh_message(meshnet_name=meshnet_name, message="Pong from the relay!")
+    # Check if the packet is a TEXT_MESSAGE_APP packet
+    if "decoded" in packet and "portnum" in packet["decoded"]:
+        if packet["decoded"]["portnum"] == "TEXT_MESSAGE_APP":
+            # Check if the packet contains a text command
+            if formatted_message.strip().lower() == "!ping":
+                self.logger.debug(f"Received ping command from {longname}")
+                # Respond to the ping command
+                await self.send_mesh_message(meshnet_name=meshnet_name, message="Pong from the relay!")
 ```
 
 ## Best Practices
