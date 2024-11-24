@@ -146,7 +146,7 @@ async def handle_meshtastic_message(self, packet, formatted_message, longname, m
 
 Now that you know the basics, consider adding more complex features to your plugin, such as interacting with external APIs, responding to specific commands, or handling more detailed data from the Meshtastic network. Check out existing plugins, such as `nodes_plugin.py` or `map_plugin.py`, for more ideas and examples.
 
-If you want an easy way to get started right away you fork this template repo [mmr-plugin-template](https://github.com/jeremiah-k/mmr-plugin-template) and add your own code.  This example is similar to the one above, except that for Meshtastic it only logs when a message is sent (via a TEXT_MESSAGE_APP packet).
+If you want an easy way to get started right away, you can fork this template repo [mmr-plugin-template](https://github.com/jeremiah-k/mmr-plugin-template) and add your own code.  This example is similar to the one above, except that for Meshtastic it only logs when a message is sent (via a TEXT_MESSAGE_APP packet).
 
 If you have any questions or run into any issues, feel to ask in the project's Matrix room [#mmrelay:meshnet.club](https://matrix.to/#/#mmrelay:meshnet.club).
 
