@@ -1,7 +1,6 @@
 M<>M Relay supports a plugin system to expand its capabilities.
 
-We also encourage community members to contribute their own plugins to the project, which can be easily integrated into the existing framework to enhance the relay's functionality.
-
+Core plugins:
 
 | Plugin      | Command         | Matrix Support | Radio Support | Description                                                        |
 | ----------  | --------------- | -------------- | ------------- | ------------------------------------------------------------------ |
@@ -13,6 +12,8 @@ We also encourage community members to contribute their own plugins to the proje
 | `telemetry` | `!airUtilTx`    | yes            | no            | Graph of avg Mesh airUtilTx for last 12 hours                      |
 | `mesh_relay`|                 | yes            | yes           | Relays radio packets between a Mesh and a Matrix room              |
 | `map`       | `!map`          | yes            | no            | Map of mesh radio nodes. Supports `zoom` and `size` to customize   |
+
+_Note: As of 11/24/24 the map_plugin needs maintenance before it is functional again, also the `mesh_relay` plugin is experimental and needs more work before its finished._
 
 ## How to enable a plugin
 
@@ -54,3 +55,4 @@ Here are some examples of how to use the plugin:
 * `!map size=800,900`: Shows the radio nodes on a world map of size width=`800`px height=`900`px
 * `!map zoom=5 size=800,900`: Shows the radio nodes on a world map zoomed out. It has size width=`800`px height=`900`px
 
+We also encourage users to contribute their own plugins to the project through our new (Community Plugins)[https://github.com/geoffwhittington/meshtastic-matrix-relay/wiki/Community-Plugins] framework.
