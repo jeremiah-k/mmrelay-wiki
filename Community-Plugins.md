@@ -9,7 +9,7 @@ To develop plugins for MMRelay, you will need the following:
 - Python 3.8+
 - A working installation of the MMRelay repository.
 - Familiarity with Python and some experience with asynchronous programming.
-- A text editor or IDE (e.g., VS Code, PyCharm).
+- A text editor or IDE (e.g., VS Code, PyCharm. I prefer [VSCodium](https://vscodium.com/).
 
 ## Understanding the Plugin System
 
@@ -65,6 +65,8 @@ To enable your new plugin, you will need to add it to your `config.yaml`. This i
 plugins:
   hello_world:
     active: true
+    repository: https://github.com/Example-Username/HelloWorld.git
+    tag: main
 ```
 
 The priority of the plugin is set internally within the plugin class itself by defining a `priority` attribute. By default, if you do not set a `priority` attribute in your plugin, it will use the default priority value set in the `BasePlugin` class. The lower the priority number, the earlier the plugin will be executed.
