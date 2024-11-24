@@ -1,19 +1,19 @@
-# Plugin Development Guide for Meshtastic-Matrix Relay
+# Plugin Development Guide for MMRelay
 
-Welcome to the Meshtastic-Matrix Relay plugin development guide! This document will walk you through the basics of writing plugins for the relay system, including setting up a development environment, understanding the `BasePlugin` class, and creating your first plugin. This guide is meant to help you expand the functionality of the relay by creating custom plugins tailored to specific use cases.
+Welcome to the MMRelay plugin development guide! This document will walk you through the basics of writing plugins for the relay system, including setting up a development environment, understanding the `BasePlugin` class, and creating your first plugin. This guide is meant to help you expand the functionality of the relay by creating custom plugins tailored to specific use cases.
 
 ## Prerequisites
 
-To develop plugins for Meshtastic-Matrix Relay, you will need the following:
+To develop plugins for MMRelay, you will need the following:
 
 - Python 3.8+
-- A working installation of the Meshtastic-Matrix Relay repository.
+- A working installation of the MMRelay repository.
 - Familiarity with Python and some experience with asynchronous programming.
 - A text editor or IDE (e.g., VS Code, PyCharm).
 
 ## Understanding the Plugin System
 
-Plugins in Meshtastic-Matrix Relay are Python classes that extend the functionality of the relay. All plugins inherit from a shared base class (`BasePlugin`) that provides essential methods and utilities for message handling, logging, and data persistence. By subclassing `BasePlugin`, you can write a plugin that interacts with either the Meshtastic mesh network or Matrix rooms, or both.
+Plugins in MMRelay are Python classes that extend the functionality of the relay. All plugins inherit from a shared base class (`BasePlugin`) that provides essential methods and utilities for message handling, logging, and data persistence. By subclassing `BasePlugin`, you can write a plugin that interacts with either the Meshtastic meshnet or Matrix rooms, or both.
 
 ### Structure of the Base Plugin
 
@@ -36,14 +36,9 @@ Let's create a simple example plugin to get started. We will create a plugin nam
 
 ### Step 1: Set Up Your Plugin Directory
 
-All plugins reside in the `plugins/` directory. If you want to create a new plugin, simply create a new file in this directory.
+Plugins should reside in their own project repositories. To create a new plugin, start by creating your own project repository. Clone your new repo to your local environment, and open it in your preferred editor. Inside your cloned project, create a new file for the plugin.
 
-For this example, create a new file called `hello_world.py` in the `plugins/` directory:
-
-```
-plugins/
-  - hello_world.py
-```
+For this example, create a new file called `hello_world.py` in your project repository
 
 ### Step 2: Create the Plugin Class
 
@@ -149,8 +144,6 @@ async def handle_meshtastic_message(self, packet, formatted_message, longname, m
 
 Now that you know the basics, consider adding more complex features to your plugin, such as interacting with external APIs, responding to specific commands, or handling more detailed data from the Meshtastic network. Check out existing plugins, such as `nodes_plugin.py` or `map_plugin.py`, for more ideas and examples.
 
-If you have any questions or run into any issues, feel free to reach out or open a discussion in the project's community channels.
+If you have any questions or run into any issues, feel to ask in the project's Matrix room [#mmrelay:meshnet.club](https://matrix.to/#/#mmrelay:meshnet.club).
 
 Happy coding!
-
-
