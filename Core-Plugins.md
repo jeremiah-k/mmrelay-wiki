@@ -13,7 +13,7 @@ Core plugins:
 | `mesh_relay`|                 | yes            | yes           | Relays radio packets between a Mesh and a Matrix room              |
 | `map`       | `!map`          | yes            | no            | Map of mesh radio nodes. Supports `zoom` and `size` to customize   |
 
-_Note: As of 11/24/24 the map_plugin needs maintenance before it is functional again, also the `mesh_relay` plugin is experimental and needs more work before its finished._
+_Note: As of 11/24/24 the map_plugin needs maintenance before it is functional again, also the `mesh_relay` plugin is experimental and needs more work before its operational._
 
 ## How to enable a plugin
 
