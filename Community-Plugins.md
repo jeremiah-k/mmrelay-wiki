@@ -7,7 +7,7 @@ Welcome to the MMRelay plugin development guide! This document will walk you thr
 To develop plugins for MMRelay, you will need the following:
 
 - Python 3.8+
-- A working installation of the MMRelay repository.
+- A working installation of the MMRelay application.
 - Familiarity with Python and some experience with asynchronous programming (If you are new to these, this is a good way to learn!).
 - A text editor or IDE (e.g., VS Code, PyCharm. I prefer [VSCodium](https://vscodium.com/.)).
 
