@@ -34,9 +34,9 @@ These functions allow you to define how your plugin will handle incoming message
 
 Let's create a simple example plugin to get started. We will create a plugin named **HelloWorld** that logs "Hello world" when it receives a message from either Meshtastic or Matrix (this basic example will also log for every Meshtastic packet received, not just TEXT_MESSAGE_APP packets).
 
-### Step 1: Set Up Your Plugin Directory
+### Step 1: Set Up Your Plugin Repository
 
-Plugins should reside in their own project repositories. To create a new plugin, start by creating your own project repository. Clone your new repo to your local environment, and open it in your preferred editor. Inside your cloned project, create a new file for the plugin.
+Plugins should reside in their own project repositories. To create a new plugin, start by creating your own project repository on the code hosting platform of your choice (GitHub, Gitlab, Codeberg, etc). Clone your new repo to your local environment, and open it in your preferred editor. Inside your cloned project, create a new file for the plugin.
 
 For this example, create a new file called `hello_world.py` in your project repository
 
