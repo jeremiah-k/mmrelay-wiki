@@ -36,6 +36,8 @@ Let's create a simple example plugin to get started. We will create a plugin nam
 
 Plugins should reside in their own project repositories. To create a new plugin, start by creating your own project repository on the code hosting platform of your choice (GitHub, Gitlab, Codeberg, etc). Clone your new repo to your local environment, and open it in your preferred editor. Inside your cloned project, create a new file for the plugin.
 
+_Note: If you want an easy way to get started right away, you can fork this template repository [mmr-plugin-template](https://github.com/jeremiah-k/mmr-plugin-template) and add your own code._
+
 For this example, create a new file called `hello_world.py` in your project repository
 
 ### Step 2: Create the Plugin Class
@@ -146,8 +148,6 @@ async def handle_meshtastic_message(self, packet, formatted_message, longname, m
 ## Next Steps
 
 Now that you know the basics, consider adding more complex features to your plugin, such as interacting with external APIs, responding to specific commands, or handling more detailed data from the Meshtastic network. Check out existing plugins, such as `nodes_plugin.py` or `weather_plugin.py`, for more ideas and examples.
-
-If you want an easy way to get started right away, you can fork this template repo [mmr-plugin-template](https://github.com/jeremiah-k/mmr-plugin-template) and add your own code.
 
 If you have any questions or run into any issues, feel to ask in the project's Matrix room [#mmrelay:meshnet.club](https://matrix.to/#/#mmrelay:meshnet.club).
 
