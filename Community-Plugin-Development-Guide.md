@@ -31,11 +31,11 @@ These functions allow you to define how your plugin will handle incoming message
 
 ## Creating Your First Plugin
 
-Let's create a simple example plugin to get started. We will create a plugin named **HelloWorld** that logs "Hello world" when it receives a message from either Meshtastic or Matrix (this basic example will also log for every Meshtastic packet received, not just TEXT_MESSAGE_APP packets).
+Let's create a simple example plugin to get started. We will create a minimalist plugin named **HelloWorld** that logs "Hello world" when it receives a message from either Meshtastic or Matrix.
 
 ### Step 1: Set Up Your Plugin Repository
 
-Plugins should reside in their own project repositories. To create a new plugin, start by creating your own project repository on the code hosting platform of your choice (GitHub, Gitlab, Codeberg, etc). Clone your new repo to your local environment, and open it in your preferred editor. Inside your cloned project, create a new file for the plugin.
+Plugins should reside in their own project repositories. To create a new plugin, start by creating your own project repository on the code hosting platform of your choice (GitHub, GitLab, Codeberg, etc.). Clone your new repo to your local environment and open it in your preferred editor. Inside your cloned project, create a new file for the plugin.
 
 _Note: If you want an easy way to get started right away, you can fork this template repository [mmr-plugin-template](https://github.com/jeremiah-k/mmr-plugin-template) and add your own code._
 
@@ -45,7 +45,7 @@ For this example, create a new file called `hello_world.py` in your project repo
 
 Every plugin must inherit from `BasePlugin` and set its unique `plugin_name`. Below is the complete code for the HelloWorld plugin:
 
-```
+```python
 from plugins.base_plugin import BasePlugin
 
 class Plugin(BasePlugin):
@@ -53,24 +53,32 @@ class Plugin(BasePlugin):
 
     async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
         self.logger.debug("Hello world, Meshtastic")
+        return False  # Indicate that we did not handle the message
 
     async def handle_room_message(self, room, event, full_message):
         self.logger.debug("Hello world, Matrix")
+        return False  # Indicate that we did not handle the message
 ```
 
 ### Step 3: Activate the Plugin in Your Configuration
 
 To enable your new plugin, you will need to add it to your `config.yaml`. This is where the relay determines which plugins are active:
 
-```
-plugins:
+```yaml
+custom-plugins:
   hello_world:
     active: true
-    repository: https://github.com/Example-Username/HelloWorld.git
-    tag: main
 ```
 
-The priority of the plugin is set internally within the plugin class itself by defining a `priority` attribute. By default, if you do not set a `priority` attribute in your plugin, it will use the default priority value set in the `BasePlugin` class. The lower the priority number, the earlier the plugin will be executed.
+If your plugin is hosted in a repository and you want the relay to clone it automatically, you can specify the repository and tag:
+
+```yaml
+community-plugins:
+  hello_world:
+    active: true
+    repository: https://github.com/YourUsername/HelloWorld.git
+    tag: main
+```
 
 ### Step 4: Running and Testing the Plugin
 
@@ -82,13 +90,87 @@ DEBUG:Plugin:hello_world:Started with priority=10
 
 You can then send messages via Meshtastic or Matrix to verify that the plugin is logging the expected "Hello world" messages.
 
+## Minimalist Plugin Example
+
+If you're looking for a minimalist example to get started without worrying about handling channels or direct messages (DMs), here's a simple plugin that responds to a specific command:
+
+```python
+from plugins.base_plugin import BasePlugin
+
+class Plugin(BasePlugin):
+    plugin_name = "simple_responder"
+
+    async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
+        if "decoded" in packet and "text" in packet["decoded"]:
+            message = packet["decoded"]["text"].strip()
+
+            if message == "!hello":
+                from meshtastic_utils import connect_meshtastic
+                meshtastic_client = connect_meshtastic()
+
+                # Respond with a greeting
+                meshtastic_client.sendText(text="Hello!", channelIndex=0)
+                return True  # Indicate that we handled the message
+        return False  # Indicate that we did not handle the message
+
+    async def handle_room_message(self, room, event, full_message):
+        return False  # Not handling Matrix messages in this plugin
+```
+
+This example avoids the complexities of channel and DM handling, making it easier for beginners to get started.
+
 ## Advanced Topics
+
+As you become more comfortable with plugin development, you can explore more advanced features to enhance your plugins.
+
+### Handling Direct Messages (DMs) and Channel-Specific Responses
+
+Plugins can be configured to respond differently to direct messages (DMs) and messages in specific channels. By default, plugins will respond to DMs if they are active, regardless of the channels specified. However, you can control this behavior using the `is_channel_enabled` method.
+
+#### Responding to Messages in Specific Channels
+
+You can specify which channels your plugin should respond to using the `channels` setting in your `config.yaml`:
+
+```yaml
+plugins:
+  my_plugin:
+    active: true
+    channels: [0,1,3,4]  # List of Meshtastic channels
+```
+
+In your plugin, use the `is_channel_enabled` method to check if the plugin should respond to a message in a particular channel:
+
+```python
+if not self.is_channel_enabled(channel):
+    self.logger.debug(f"Channel {channel} not enabled for plugin '{self.plugin_name}'")
+    return False
+```
+
+#### Handling Direct Messages (DMs)
+
+By default, plugins will respond to DMs if they are active. The `is_channel_enabled` method in `BasePlugin` handles this logic. When processing a message, determine if it is a DM and pass the `is_direct_message` parameter:
+
+```python
+# Determine if the message is a direct message
+toId = packet.get("to")
+myId = meshtastic_client.myInfo.my_node_num  # Relay's own node number
+
+if toId == myId:
+    is_direct_message = True
+else:
+    is_direct_message = False
+
+if not self.is_channel_enabled(channel, is_direct_message=is_direct_message):
+    return False
+```
+
+This ensures that your plugin can respond appropriately to DMs and channel messages based on your configuration.
 
 ### Using Data Persistence
 
 `BasePlugin` provides easy-to-use methods for saving and retrieving plugin-specific data. For instance, if your plugin needs to track statistics for each node, you can use:
 
-```
+```python
 # Store node data
 self.store_node_data(meshtastic_id, node_data)
 
@@ -100,7 +182,7 @@ node_data = self.get_node_data(meshtastic_id)
 
 If your plugin needs to perform periodic tasks, you can use the built-in scheduling capabilities from the `BasePlugin`. For example, the `start()` method in the base class provides a way to set up recurring background jobs:
 
-```
+```python
 def start(self):
     schedule.every(5).minutes.do(self.background_job)
 ```
@@ -109,59 +191,70 @@ def start(self):
 
 To make your plugin respond to specific commands in Matrix rooms, you need to handle user messages that tag the bot and provide a command. For commands to be processed, users must tag the bot using `@botname: !command`. Here's how you can extend your `handle_room_message()` method to support this functionality:
 
-```
+```python
 from matrix_utils import bot_command
 
 async def handle_room_message(self, room, event, full_message):
     # Check if the message is a command directed to the bot
-    if bot_command(self.plugin_name, full_message):
+    if self.matches(full_message):
         if "!status" in full_message:
             await self.send_matrix_message(room_id=room.room_id, message="System is running smoothly.")
         elif "!hello" in full_message:
             await self.send_matrix_message(room_id=room.room_id, message="Hello from the plugin!")
+        return True  # Indicate that we handled the message
+    return False  # Indicate that we did not handle the message
 ```
 
-This allows the plugin to handle messages that specifically tag it in the form `@botname: !command`. The `bot_command()` helper function will help determine if the bot's name is included in the message, ensuring that only relevant messages are processed.
+The `self.matches(full_message)` method helps determine if the bot's name is included in the message, ensuring that only relevant messages are processed.
 
 ### Handling Meshtastic-Specific Commands
 
 You can also create specific commands for handling messages coming from the Meshtastic network. The `handle_meshtastic_message()` function can be modified to parse commands from Meshtastic nodes:
 
-```
+```python
 async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
     if "decoded" in packet and "text" in packet["decoded"]:
         message = packet["decoded"]["text"].strip()
         channel = packet.get("channel", 0)
 
-        if not self.is_channel_enabled(channel):
-            self.logger.debug(f"Channel {channel} not enabled for plugin '{self.plugin_name}'")
+        from meshtastic_utils import connect_meshtastic
+        meshtastic_client = connect_meshtastic()
+
+        # Determine if the message is a direct message
+        toId = packet.get("to")
+        myId = meshtastic_client.myInfo.my_node_num  # Relay's own node number
+
+        if toId == myId:
+            is_direct_message = True
+        else:
+            is_direct_message = False
+
+        if not self.is_channel_enabled(channel, is_direct_message=is_direct_message):
             return False
 
         if message == "!ping":
-            from meshtastic_utils import connect_meshtastic
-
-            meshtastic_client = connect_meshtastic()
-
             # Wait for the response delay
             await asyncio.sleep(self.get_response_delay())
 
-            # Send the reply back to the same channel
-            meshtastic_client.sendText(text="pong", channelIndex=channel)
+            fromId = packet.get("fromId")
+
+            if is_direct_message:
+                # Respond via DM
+                meshtastic_client.sendText(
+                    text="pong",
+                    destinationId=fromId,
+                )
+            else:
+                # Respond in the same channel
+                meshtastic_client.sendText(
+                    text="pong",
+                    channelIndex=channel,
+                )
+            return True  # Indicate that we handled the message
+    return False  # Indicate that we did not handle the message
 ```
 
 **Note on Response Delay**: If your plugin automatically responds to mesh commands, it's important to respect the `plugin_response_delay` configuration option. You can retrieve the configured delay using `self.get_response_delay()` and apply it before sending your response, as shown in the example above. This helps in managing network traffic and prevents overwhelming the mesh network with rapid replies.
-
-### Respecting Channel Configuration
-
-Your plugin can be configured to operate on specific channels. Use `self.is_channel_enabled(channel)` to check if your plugin should respond on the given channel:
-
-```
-channel = packet.get("channel", 0)
-
-if not self.is_channel_enabled(channel):
-    self.logger.debug(f"Channel {channel} not enabled for plugin '{self.plugin_name}'")
-    return False
-```
 
 ## Best Practices
 
@@ -170,11 +263,12 @@ if not self.is_channel_enabled(channel):
 3. **Avoid Blocking Operations**: Since the relay is an asynchronous application, be careful not to use blocking calls that could delay message handling.
 4. **Respect Plugin Priorities**: Set plugin priorities appropriately by defining the `priority` attribute within your plugin class to control the order in which messages are processed by different plugins.
 5. **Handle Response Delays**: If your plugin sends automatic responses, use `await asyncio.sleep(self.get_response_delay())` to respect the configured response delay.
+6. **Manage Channel Responses**: Use `self.is_channel_enabled(channel, is_direct_message=is_direct_message)` to control where your plugin responds and to ensure it handles DMs appropriately.
 
 ## Next Steps
 
 Now that you know the basics, consider adding more complex features to your plugin, such as interacting with external APIs, responding to specific commands, or handling more detailed data from the Meshtastic network. Check out existing plugins, such as `nodes_plugin.py` or `weather_plugin.py`, for more ideas and examples.
 
-If you have any questions or run into any issues, feel to ask in the project's Matrix room [#mmrelay:meshnet.club](https://matrix.to/#/#mmrelay:meshnet.club).
+If you have any questions or run into any issues, feel free to ask in the project's Matrix room [#mmrelay:meshnet.club](https://matrix.to/#/#mmrelay:meshnet.club).
 
 Happy coding!
