@@ -1,3 +1,5 @@
+_Note: This is an updated version of the guide and references new code in the `adding-plugin-features` branch.  Please use that branch while developing your plugin. I'll remove this note when the changes are merged into `main`._
+
 Welcome to the MMRelay plugin development guide! This document will walk you through the basics of writing plugins for the relay system, including setting up a development environment, understanding the `BasePlugin` class, and creating your first plugin. This guide is meant to help you expand the functionality of the relay by creating custom plugins tailored to specific use cases.
 
 ## Prerequisites
