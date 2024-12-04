@@ -140,7 +140,7 @@ plugins:
 
 In your plugin, you can check whether to respond to a message based on the channel and whether it's a DM using the `is_channel_enabled` method:
 
-``python
+```python
 if not self.is_channel_enabled(channel, is_direct_message=is_direct_message):
     self.logger.debug(f"Channel {channel} not enabled for plugin '{self.plugin_name}'")
     return False
