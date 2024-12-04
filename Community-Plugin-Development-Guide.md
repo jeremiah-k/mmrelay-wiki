@@ -84,7 +84,7 @@ community-plugins:
 
 Once you've added the plugin to your configuration, restart the relay. If everything is set up correctly, you should see a line in your log indicating that the **HelloWorld** plugin has started:
 
-```
+```bash
 DEBUG:Plugin:hello_world:Started with priority=10
 ```
 
@@ -125,30 +125,64 @@ As you become more comfortable with plugin development, you can explore more adv
 
 ### Handling Direct Messages (DMs) and Channel-Specific Responses
 
-Plugins can be configured to respond differently to direct messages (DMs) and messages in specific channels. By default, plugins will respond to DMs if they are active, regardless of the channels specified. However, you can control this behavior using the `is_channel_enabled` method.
+Plugins can be configured to respond differently to direct messages (DMs) and messages in specific channels. The behavior is controlled by the `channels` setting in your plugin's configuration.
 
-#### Responding to Messages in Specific Channels
+#### Responding Only to Direct Messages (DMs)
 
-You can specify which channels your plugin should respond to using the `channels` setting in your `config.yaml`:
+If you want your plugin to respond **only** to DMs and ignore all channel messages, you can set the `channels` list to be empty:
 
 ```yaml
 plugins:
   my_plugin:
     active: true
-    channels: [0,1,3,4]  # List of Meshtastic channels
+    channels: []  # Empty list means the plugin will only respond to DMs
 ```
 
-In your plugin, use the `is_channel_enabled` method to check if the plugin should respond to a message in a particular channel:
+In your plugin, you can check whether to respond to a message based on the channel and whether it's a DM using the `is_channel_enabled` method:
 
-```python
-if not self.is_channel_enabled(channel):
+``python
+if not self.is_channel_enabled(channel, is_direct_message=is_direct_message):
     self.logger.debug(f"Channel {channel} not enabled for plugin '{self.plugin_name}'")
     return False
 ```
 
+#### Responding to All Mapped Channels
+
+If you want your plugin to respond to all mapped channels (channels defined in `matrix_rooms`), you can either omit the `channels` setting or comment it out:
+
+```yaml
+plugins:
+  my_plugin:
+    active: true
+    # channels: [0,1,3,4]  # Commented out or omitted; plugin responds to all mapped channels
+```
+
+By default, if `channels` is not specified, the plugin will respond to all mapped channels. The `is_channel_enabled` method handles this logic internally.
+
+#### Responding to Specific Channels
+
+If you want your plugin to respond only to specific channels, you can list them in the `channels` setting:
+
+```yaml
+plugins:
+  my_plugin:
+    active: true
+    channels: [0,1,3,4]  # List of Meshtastic channels the plugin should respond to
+```
+
 #### Handling Direct Messages (DMs)
 
-By default, plugins will respond to DMs if they are active. The `is_channel_enabled` method in `BasePlugin` handles this logic. When processing a message, determine if it is a DM and pass the `is_direct_message` parameter:
+By default, plugins will always respond to DMs if they are active, regardless of the `channels` configuration. The `is_channel_enabled` method in `BasePlugin` ensures that DMs are always enabled for the plugin:
+
+```python
+def is_channel_enabled(self, channel, is_direct_message=False):
+    if is_direct_message:
+        return True  # Always respond to DMs if the plugin is active
+    else:
+        return channel in self.channels
+```
+
+When processing a message, determine if it is a DM and pass the `is_direct_message` parameter:
 
 ```python
 # Determine if the message is a direct message
@@ -192,8 +226,6 @@ def start(self):
 To make your plugin respond to specific commands in Matrix rooms, you need to handle user messages that tag the bot and provide a command. For commands to be processed, users must tag the bot using `@botname: !command`. Here's how you can extend your `handle_room_message()` method to support this functionality:
 
 ```python
-from matrix_utils import bot_command
-
 async def handle_room_message(self, room, event, full_message):
     # Check if the message is a command directed to the bot
     if self.matches(full_message):
