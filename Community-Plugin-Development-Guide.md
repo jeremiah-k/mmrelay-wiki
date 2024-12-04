@@ -20,7 +20,7 @@ The `BasePlugin` is designed to provide a consistent interface for all plugins. 
 - **Logging**: Each plugin has its own logger (`self.logger`) that helps with tracking actions and debugging.
 - **Data Storage**: Methods like `store_node_data()`, `get_node_data()`, and `delete_node_data()` enable plugins to persistently store data specific to nodes.
 - **Message Handling**: Plugins can react to incoming messages from Meshtastic or Matrix by implementing specific methods.
-- **Configuration Options**: Plugins can access configuration options like `channels` from the `config.yaml` file.
+- **Configuration Options**: Plugins can access configuration options like `channels` from the `config.yaml` file. Note that the `plugin_response_delay` is now configured globally under the `meshtastic` section.
 
 The two key methods that each plugin must implement are:
 
@@ -28,6 +28,50 @@ The two key methods that each plugin must implement are:
 - `handle_room_message(room, event, full_message)`
 
 These functions allow you to define how your plugin will handle incoming messages from Meshtastic nodes and Matrix rooms respectively.
+
+### Useful Functions from Other Modules
+
+In addition to the methods provided by `BasePlugin`, there are several functions in the relay's codebase that you can use in your plugins to avoid reinventing the wheel:
+
+- **Matrix Utilities**:
+  - `bot_command(command, payload)`: A function from `matrix_utils.py` that helps determine if a Matrix message is a command directed at the bot.
+
+    ```python
+    def bot_command(command, payload):
+        return f"{bot_user_name}: !{command}" in payload
+    ```
+
+  - **Example Usage**:
+
+    ```python
+    from matrix_utils import bot_command
+
+    if bot_command('status', full_message):
+        # Handle the 'status' command
+        await self.send_matrix_message(room.room_id, "System is running smoothly.")
+    ```
+
+- **Meshtastic Utilities**:
+  - `connect_meshtastic()`: A function from `meshtastic_utils.py` that returns the Meshtastic client interface. Useful for sending messages or accessing node information.
+
+    ```python
+    from meshtastic_utils import connect_meshtastic
+
+    meshtastic_client = connect_meshtastic()
+    ```
+
+- **Database Utilities**:
+  - For storing plugin-specific data, you should use the data persistence methods provided by `BasePlugin`. However, if you need to access node information like longnames or shortnames, you can use functions from `db_utils.py`.
+
+    - `get_longname(meshtastic_id)`: Retrieve the longname for a given Meshtastic ID.
+    - `get_shortname(meshtastic_id)`: Retrieve the shortname for a given Meshtastic ID.
+
+    ```python
+    from db_utils import get_longname, get_shortname
+
+    longname = get_longname(sender_id)
+    shortname = get_shortname(sender_id)
+    ```
 
 ## Creating Your First Plugin
 
@@ -96,6 +140,8 @@ If you're looking for a minimalist example to get started without worrying about
 
 ```python
 from plugins.base_plugin import BasePlugin
+from meshtastic_utils import connect_meshtastic
+from matrix_utils import bot_command
 
 class Plugin(BasePlugin):
     plugin_name = "simple_responder"
@@ -105,7 +151,6 @@ class Plugin(BasePlugin):
             message = packet["decoded"]["text"].strip()
 
             if message == "!hello":
-                from meshtastic_utils import connect_meshtastic
                 meshtastic_client = connect_meshtastic()
 
                 # Respond with a greeting
@@ -114,10 +159,13 @@ class Plugin(BasePlugin):
         return False  # Indicate that we did not handle the message
 
     async def handle_room_message(self, room, event, full_message):
-        return False  # Not handling Matrix messages in this plugin
+        if bot_command("hello", full_message):
+            await self.send_matrix_message(room.room_id, "Hello from the plugin!")
+            return True  # Indicate that we handled the message
+        return False  # Indicate that we did not handle the message
 ```
 
-This example avoids the complexities of channel and DM handling, making it easier for beginners to get started.
+This example avoids the complexities of channel and DM handling, making it easier for beginners to get started. Note that we are using the existing `bot_command` function from `matrix_utils.py` to check if the message is a command directed at the bot.
 
 ## Advanced Topics
 
@@ -223,33 +271,39 @@ def start(self):
 
 ### Handling Commands and Tagging Bots in Matrix
 
-To make your plugin respond to specific commands in Matrix rooms, you need to handle user messages that tag the bot and provide a command. For commands to be processed, users must tag the bot using `@botname: !command`. Here's how you can extend your `handle_room_message()` method to support this functionality:
+To make your plugin respond to specific commands in Matrix rooms, you can use the existing `bot_command` function from `matrix_utils.py`. This function helps determine if a message is a command directed at the bot.
+
+**Using the `bot_command` Function**:
 
 ```python
+from matrix_utils import bot_command
+
 async def handle_room_message(self, room, event, full_message):
-    # Check if the message is a command directed to the bot
-    if self.matches(full_message):
-        if "!status" in full_message:
-            await self.send_matrix_message(room_id=room.room_id, message="System is running smoothly.")
-        elif "!hello" in full_message:
-            await self.send_matrix_message(room_id=room.room_id, message="Hello from the plugin!")
+    if bot_command("status", full_message):
+        await self.send_matrix_message(room_id=room.room_id, message="System is running smoothly.")
+        return True  # Indicate that we handled the message
+    elif bot_command("hello", full_message):
+        await self.send_matrix_message(room_id=room.room_id, message="Hello from the plugin!")
         return True  # Indicate that we handled the message
     return False  # Indicate that we did not handle the message
 ```
 
-The `self.matches(full_message)` method helps determine if the bot's name is included in the message, ensuring that only relevant messages are processed.
+This approach leverages the existing `bot_command` function, ensuring consistency and reducing code duplication.
 
 ### Handling Meshtastic-Specific Commands
 
-You can also create specific commands for handling messages coming from the Meshtastic network. The `handle_meshtastic_message()` function can be modified to parse commands from Meshtastic nodes:
+You can also create specific commands for handling messages coming from the Meshtastic network. The `handle_meshtastic_message()` function can be modified to parse commands from Meshtastic nodes.
+
+**Example Using Existing Functions**:
 
 ```python
+from meshtastic_utils import connect_meshtastic
+
 async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
     if "decoded" in packet and "text" in packet["decoded"]:
         message = packet["decoded"]["text"].strip()
         channel = packet.get("channel", 0)
 
-        from meshtastic_utils import connect_meshtastic
         meshtastic_client = connect_meshtastic()
 
         # Determine if the message is a direct message
@@ -292,8 +346,13 @@ async def handle_meshtastic_message(self, packet, formatted_message, longname, m
 
 ```yaml
 meshtastic:
-  plugin_response_delay: 3  # Delay in seconds before plugin responses. The default is 3, but this option allows the user to configure it how they want.
+  plugin_response_delay: 30  # Delay in seconds before plugin responses
 ```
+
+### Important Configuration Changes
+
+- **Global Response Delay**: The `plugin_response_delay` is now configured globally under the `meshtastic` section of your `config.yaml`. It is no longer specified per plugin.
+- **Per-Plugin Delay Removed**: Individual plugins no longer support a `plugin_response_delay` setting in their configuration. All plugins that utilize response delays will use the global setting.
 
 ## Best Practices
 
@@ -303,6 +362,7 @@ meshtastic:
 4. **Respect Plugin Priorities**: Set plugin priorities appropriately by defining the `priority` attribute within your plugin class to control the order in which messages are processed by different plugins.
 5. **Handle Response Delays**: If your plugin sends automatic responses, use `await asyncio.sleep(self.get_response_delay())` to respect the globally configured response delay.
 6. **Manage Channel Responses**: Use `self.is_channel_enabled(channel, is_direct_message=is_direct_message)` to control where your plugin responds and to ensure it handles DMs appropriately.
+7. **Leverage Existing Functions**: Utilize functions provided by `matrix_utils.py`, `meshtastic_utils.py`, and `db_utils.py` to simplify your plugin code and maintain consistency.
 
 ## Next Steps
 
