@@ -1,52 +1,373 @@
-# Meshtastic <=> Matrix Relay
+Welcome to the MMRelay plugin development guide! This document will walk you through the basics of writing plugins for the relay system, including setting up a development environment, understanding the `BasePlugin` class, and creating your first plugin. This guide is meant to help you expand the functionality of the relay by creating custom plugins tailored to specific use cases.
 
-Meshtastic <=> Matrix Relay is a powerful and easy-to-use relay between Meshtastic devices and Matrix chat rooms, allowing seamless communication across platforms. This opens the door for bridging Meshtastic devices to [many other platforms](https://matrix.org/bridges/). In this wiki entry, we will cover the following topics:
+## Prerequisites
 
-1. Introduction to Meshtastic <=> Matrix Relay
-2. Key concepts
-3. Use cases
-4. Advanced features
+To develop plugins for MMRelay, you will need the following:
 
-## 1. Introduction
+- Python 3.8+
+- A working installation of the MMRelay application.
+- Familiarity with Python and some experience with asynchronous programming (If you are new to these, this is a good way to learn!).
+- A text editor or IDE (e.g., VS Code, PyCharm. I prefer [VSCodium](https://vscodium.com/).).
 
-The Meshtastic <=> Matrix Relay is a bidirectional message relay between Meshtastic devices and Matrix chat rooms. This allows communication between two or more mesh networks, providing seamless communication across platforms. This is especially useful for bridging Meshtastic devices to other platforms, such as Slack, Discord, and IRC, among others.
+## Understanding the Plugin System
 
-## 2. Key Concepts
+Plugins in MMRelay are Python classes that extend the functionality of the relay. All plugins inherit from a shared base class (`BasePlugin`) that provides essential methods and utilities for message handling, logging, and data persistence. By subclassing `BasePlugin`, you can write a plugin that interacts with either the Meshtastic meshnet or Matrix rooms, or both.
 
-### Mesh Networks
+### Structure of the Base Plugin
 
-A mesh network is a decentralized network in which each node can relay data for the network. In a mesh network, messages can be routed through multiple nodes until they reach their destination. This is in contrast to traditional networks, in which messages are routed through a central server or gateway.
+The `BasePlugin` is designed to provide a consistent interface for all plugins. Here's a brief overview of some important features provided by `BasePlugin`:
 
-### Meshtastic
+- **Logging**: Each plugin has its own logger (`self.logger`) that helps with tracking actions and debugging.
+- **Data Storage**: Methods like `store_node_data()`, `get_node_data()`, and `delete_node_data()` enable plugins to persistently store data specific to nodes.
+- **Message Handling**: Plugins can react to incoming messages from Meshtastic or Matrix by implementing specific methods.
+- **Configuration Options**: Plugins can access configuration options like `channels` from the `config.yaml` file. Note that the `plugin_response_delay` is now configured globally under the `meshtastic` section.
 
-Meshtastic is an open-source, decentralized, and affordable mesh network platform designed for secure and long-range communication. It provides a range of devices, including radio modules, which can communicate with each other directly or through other devices in the network. Meshtastic devices can form a mesh network, allowing messages to be routed through multiple devices until they reach their destination.
+The two key methods that each plugin must implement are:
 
-### Matrix
+- `handle_meshtastic_message(packet, formatted_message, longname, meshnet_name)`
+- `handle_room_message(room, event, full_message)`
 
-Matrix is an open standard for decentralized communication. It is designed to provide a secure and decentralized messaging platform that is interoperable across different services and devices. It's often used an open-source alternative to Telegram or Discord, but because of its very open nature there is an incredibly wide range of applications that can built on top of it.
+These functions allow you to define how your plugin will handle incoming messages from Meshtastic nodes and Matrix rooms respectively.
 
-### Meshtastic <=> Matrix Relay
+### Useful Functions from Other Modules
 
-The Meshtastic <=> Matrix Relay is a software application that allows communication between Meshtastic devices and Matrix chat rooms. It relays messages bidirectionally, supporting multiple meshnets. The relay supports both serial and network connections for Meshtastic devices and truncates long messages to fit within Meshtastic's payload size. The relay also includes custom keys in Matrix messages, which are used when relaying messages between two or more meshnets.
+In addition to the methods provided by `BasePlugin`, there are several functions in the relay's codebase that you can use in your plugins to avoid reinventing the wheel:
 
-### Custom Keys in Matrix Messages
+- **Matrix Utilities**:
+  - `bot_command(command, payload)`: A function from `matrix_utils.py` that helps determine if a Matrix message is a command directed at the bot.
 
-When a message is received from a remote meshnet, the relay includes the sender's longname and the meshnet name as custom keys in the Matrix message. This metadata helps identify the source of the message and provides context for users in the Matrix chat room.
+    ```python
+    def bot_command(command, payload):
+        return f"{bot_user_name}: !{command}" in payload
+    ```
 
-Example message format with custom keys:
+  - **Example Usage**:
+
+    ```python
+    from matrix_utils import bot_command
+
+    if bot_command('status', full_message):
+        # Handle the 'status' command
+        await self.send_matrix_message(room.room_id, "System is running smoothly.")
+    ```
+
+- **Meshtastic Utilities**:
+  - `connect_meshtastic()`: A function from `meshtastic_utils.py` that returns the Meshtastic client interface. Useful for sending messages or accessing node information.
+
+    ```python
+    from meshtastic_utils import connect_meshtastic
+
+    meshtastic_client = connect_meshtastic()
+    ```
+
+- **Database Utilities**:
+  - For storing plugin-specific data, you should use the data persistence methods provided by `BasePlugin`. However, if you need to access node information like longnames or shortnames, you can use functions from `db_utils.py`.
+
+    - `get_longname(meshtastic_id)`: Retrieve the longname for a given Meshtastic ID.
+    - `get_shortname(meshtastic_id)`: Retrieve the shortname for a given Meshtastic ID.
+
+    ```python
+    from db_utils import get_longname, get_shortname
+
+    longname = get_longname(sender_id)
+    shortname = get_shortname(sender_id)
+    ```
+
+## Creating Your First Plugin
+
+Let's create a simple example plugin to get started. We will create a minimalist plugin named **HelloWorld** that logs "Hello world" when it receives a message from either Meshtastic or Matrix.
+
+### Step 1: Set Up Your Plugin Repository
+
+Plugins should reside in their own project repositories. To create a new plugin, start by creating your own project repository on the code hosting platform of your choice (GitHub, GitLab, Codeberg, etc.). Clone your new repo to your local environment and open it in your preferred editor. Inside your cloned project, create a new file for the plugin.
+
+_Note: If you want an easy way to get started right away, you can fork this template repository [mmr-plugin-template](https://github.com/jeremiah-k/mmr-plugin-template) and add your own code._
+
+For this example, create a new file called `hello_world.py` in your project repository.
+
+### Step 2: Create the Plugin Class
+
+Every plugin must inherit from `BasePlugin` and set its unique `plugin_name`. Below is the complete code for the HelloWorld plugin:
+
+```python
+from plugins.base_plugin import BasePlugin
+
+class Plugin(BasePlugin):
+    plugin_name = "hello_world"
+
+    async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
+        self.logger.debug("Hello world, Meshtastic")
+        return False  # Indicate that we did not handle the message
+
+    async def handle_room_message(self, room, event, full_message):
+        self.logger.debug("Hello world, Matrix")
+        return False  # Indicate that we did not handle the message
 ```
-{
-"msgtype": "m.text",
-"body": "[Alice/VeryCoolMeshnet]: Hello from my very cool meshnet!",
-"meshtastic_longname": "Alice",
-"meshtastic_meshnet": "VeryCoolMeshnet"
-}
+
+### Step 3: Activate the Plugin in Your Configuration
+
+To enable your new plugin, you will need to add it to your `config.yaml`. This is where the relay determines which plugins are active:
+
+```yaml
+custom-plugins:
+  hello_world:
+    active: true
 ```
 
-## 3. Use Cases
+If your plugin is hosted in a repository and you want the relay to clone it automatically, you can specify the repository and tag:
 
-### Remote Areas
-Meshtastic <=> Matrix Relay can be used to provide communication in remote areas. In areas where traditional communication channels are unavailable or unreliable, Meshtastic devices can form a mesh network, which can be bridged to a Matrix chat room using the Meshtastic <=> Matrix Relay. This allows people in remote areas to communicate with each other and with people in other parts of the world.
+```yaml
+community-plugins:
+  hello_world:
+    active: true
+    repository: https://github.com/YourUsername/HelloWorld.git
+    tag: main
+```
 
-### Just for Fun?
-Meshtastic is fun to use by itself, but with this utility you're able to extend its reach much farther with the ability to talk to anyone on Matrix, or beyond using Matrix bridges.
+### Step 4: Running and Testing the Plugin
+
+Once you've added the plugin to your configuration, restart the relay. If everything is set up correctly, you should see a line in your log indicating that the **HelloWorld** plugin has started:
+
+```bash
+DEBUG:Plugin:hello_world:Started with priority=10
+```
+
+You can then send messages via Meshtastic or Matrix to verify that the plugin is logging the expected "Hello world" messages.
+
+## Minimalist Plugin Example
+
+If you're looking for a minimalist example to get started without worrying about handling channels or direct messages (DMs), here's a simple plugin that responds to a specific command:
+
+```python
+from plugins.base_plugin import BasePlugin
+from meshtastic_utils import connect_meshtastic
+from matrix_utils import bot_command
+
+class Plugin(BasePlugin):
+    plugin_name = "simple_responder"
+
+    async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
+        if "decoded" in packet and "text" in packet["decoded"]:
+            message = packet["decoded"]["text"].strip()
+
+            if message == "!hello":
+                meshtastic_client = connect_meshtastic()
+
+                # Respond with a greeting
+                meshtastic_client.sendText(text="Hello!", channelIndex=0)
+                return True  # Indicate that we handled the message
+        return False  # Indicate that we did not handle the message
+
+    async def handle_room_message(self, room, event, full_message):
+        if bot_command("hello", full_message):
+            await self.send_matrix_message(room.room_id, "Hello from the plugin!")
+            return True  # Indicate that we handled the message
+        return False  # Indicate that we did not handle the message
+```
+
+This example avoids the complexities of channel and DM handling, making it easier for beginners to get started. Note that we are using the existing `bot_command` function from `matrix_utils.py` to check if the message is a command directed at the bot.
+
+## Advanced Topics
+
+As you become more comfortable with plugin development, you can explore more advanced features to enhance your plugins.
+
+### Handling Direct Messages (DMs) and Channel-Specific Responses
+
+Plugins can be configured to respond differently to direct messages (DMs) and messages in specific channels. The behavior is controlled by the `channels` setting in your plugin's configuration.
+
+#### Responding Only to Direct Messages (DMs)
+
+If you want your plugin to respond **only** to DMs and ignore all channel messages, you can set the `channels` list to be empty:
+
+```yaml
+plugins:
+  my_plugin:
+    active: true
+    channels: []  # Empty list means the plugin will only respond to DMs
+```
+
+In your plugin, you can check whether to respond to a message based on the channel and whether it's a DM using the `is_channel_enabled` method:
+
+```python
+if not self.is_channel_enabled(channel, is_direct_message=is_direct_message):
+    self.logger.debug(f"Channel {channel} not enabled for plugin '{self.plugin_name}'")
+    return False
+```
+
+#### Responding to All Mapped Channels
+
+If you want your plugin to respond to all mapped channels (channels defined in `matrix_rooms`), you can either omit the `channels` setting or comment it out:
+
+```yaml
+plugins:
+  my_plugin:
+    active: true
+    # channels: [0,1,3,4]  # Commented out or omitted; plugin responds to all mapped channels
+```
+
+By default, if `channels` is not specified, the plugin will respond to all mapped channels. The `is_channel_enabled` method handles this logic internally.
+
+#### Responding to Specific Channels
+
+If you want your plugin to respond only to specific channels, you can list them in the `channels` setting:
+
+```yaml
+plugins:
+  my_plugin:
+    active: true
+    channels: [0,1,3,4]  # List of Meshtastic channels the plugin should respond to
+```
+
+#### Handling Direct Messages (DMs)
+
+By default, plugins will always respond to DMs if they are active, regardless of the `channels` configuration. The `is_channel_enabled` method in `BasePlugin` ensures that DMs are always enabled for the plugin:
+
+```python
+def is_channel_enabled(self, channel, is_direct_message=False):
+    if is_direct_message:
+        return True  # Always respond to DMs if the plugin is active
+    else:
+        return channel in self.channels
+```
+
+When processing a message, determine if it is a DM and pass the `is_direct_message` parameter:
+
+```python
+# Determine if the message is a direct message
+toId = packet.get("to")
+myId = meshtastic_client.myInfo.my_node_num  # Relay's own node number
+
+if toId == myId:
+    is_direct_message = True
+else:
+    is_direct_message = False
+
+if not self.is_channel_enabled(channel, is_direct_message=is_direct_message):
+    return False
+```
+
+This ensures that your plugin can respond appropriately to DMs and channel messages based on your configuration.
+
+### Using Data Persistence
+
+`BasePlugin` provides easy-to-use methods for saving and retrieving plugin-specific data. For instance, if your plugin needs to track statistics for each node, you can use:
+
+```python
+# Store node data
+self.store_node_data(meshtastic_id, node_data)
+
+# Retrieve node data
+node_data = self.get_node_data(meshtastic_id)
+```
+
+### Scheduling Background Tasks
+
+If your plugin needs to perform periodic tasks, you can use the built-in scheduling capabilities from the `BasePlugin`. For example, the `start()` method in the base class provides a way to set up recurring background jobs:
+
+```python
+def start(self):
+    schedule.every(5).minutes.do(self.background_job)
+```
+
+### Handling Commands and Tagging Bots in Matrix
+
+To make your plugin respond to specific commands in Matrix rooms, you can use the existing `bot_command` function from `matrix_utils.py`. This function helps determine if a message is a command directed at the bot.
+
+**Using the `bot_command` Function**:
+
+```python
+from matrix_utils import bot_command
+
+async def handle_room_message(self, room, event, full_message):
+    if bot_command("status", full_message):
+        await self.send_matrix_message(room_id=room.room_id, message="System is running smoothly.")
+        return True  # Indicate that we handled the message
+    elif bot_command("hello", full_message):
+        await self.send_matrix_message(room_id=room.room_id, message="Hello from the plugin!")
+        return True  # Indicate that we handled the message
+    return False  # Indicate that we did not handle the message
+```
+
+This approach leverages the existing `bot_command` function, ensuring consistency and reducing code duplication.
+
+### Handling Meshtastic-Specific Commands
+
+You can also create specific commands for handling messages coming from the Meshtastic network. The `handle_meshtastic_message()` function can be modified to parse commands from Meshtastic nodes.
+
+**Example Using Existing Functions**:
+
+```python
+from meshtastic_utils import connect_meshtastic
+
+async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
+    if "decoded" in packet and "text" in packet["decoded"]:
+        message = packet["decoded"]["text"].strip()
+        channel = packet.get("channel", 0)
+
+        meshtastic_client = connect_meshtastic()
+
+        # Determine if the message is a direct message
+        toId = packet.get("to")
+        myId = meshtastic_client.myInfo.my_node_num  # Relay's own node number
+
+        if toId == myId:
+            is_direct_message = True
+        else:
+            is_direct_message = False
+
+        if not self.is_channel_enabled(channel, is_direct_message=is_direct_message):
+            return False
+
+        if message == "!ping":
+            # Wait for the response delay
+            await asyncio.sleep(self.get_response_delay())
+
+            fromId = packet.get("fromId")
+
+            if is_direct_message:
+                # Respond via DM
+                meshtastic_client.sendText(
+                    text="pong",
+                    destinationId=fromId,
+                )
+            else:
+                # Respond in the same channel
+                meshtastic_client.sendText(
+                    text="pong",
+                    channelIndex=channel,
+                )
+            return True  # Indicate that we handled the message
+    return False  # Indicate that we did not handle the message
+```
+
+**Note on Response Delay**: If your plugin automatically responds to mesh commands, it's important to respect the `plugin_response_delay` configuration option. The `plugin_response_delay` is now set globally under the `meshtastic` section in `config.yaml`. You can retrieve the configured delay using `self.get_response_delay()` and apply it before sending your response, as shown in the example above. This helps in managing network traffic and prevents overwhelming the mesh network with rapid replies.
+
+**Example `config.yaml` Setting:**
+
+```yaml
+meshtastic:
+  plugin_response_delay: 30  # Delay in seconds before plugin responses
+```
+
+### Important Configuration Changes
+
+- **Global Response Delay**: The `plugin_response_delay` is now configured globally under the `meshtastic` section of your `config.yaml`. It is no longer specified per plugin.
+- **Per-Plugin Delay Removed**: Individual plugins no longer support a `plugin_response_delay` setting in their configuration. All plugins that utilize response delays will use the global setting.
+
+## Best Practices
+
+1. **Use Logging Liberally**: Make use of `self.logger` to record key events, errors, or other relevant information for debugging and monitoring.
+2. **Keep Plugins Modular**: Aim for each plugin to handle a distinct piece of functionality. This makes it easier to maintain and debug.
+3. **Avoid Blocking Operations**: Since the relay is an asynchronous application, be careful not to use blocking calls that could delay message handling.
+4. **Respect Plugin Priorities**: Set plugin priorities appropriately by defining the `priority` attribute within your plugin class to control the order in which messages are processed by different plugins.
+5. **Handle Response Delays**: If your plugin sends automatic responses, use `await asyncio.sleep(self.get_response_delay())` to respect the globally configured response delay.
+6. **Manage Channel Responses**: Use `self.is_channel_enabled(channel, is_direct_message=is_direct_message)` to control where your plugin responds and to ensure it handles DMs appropriately.
+7. **Leverage Existing Functions**: Utilize functions provided by `matrix_utils.py`, `meshtastic_utils.py`, and `db_utils.py` to simplify your plugin code and maintain consistency.
+
+## Next Steps
+
+Now that you know the basics, consider adding more complex features to your plugin, such as interacting with external APIs, responding to specific commands, or handling more detailed data from the Meshtastic network. Check out existing plugins, such as `nodes_plugin.py` or `weather_plugin.py`, for more ideas and examples.
+
+If you have any questions or run into any issues, feel free to ask in the project's Matrix room [#mmrelay:meshnet.club](https://matrix.to/#/#mmrelay:meshnet.club).
+
+Happy coding!
