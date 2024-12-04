@@ -29,14 +29,14 @@ The **Meshtastic <=> Matrix Relay** is a software application that allows commun
 When a message is received from a remote meshnet, the relay includes the sender's longname and the meshnet name as custom keys in the Matrix message. This metadata helps identify the source of the message and provides context for users in the Matrix chat room.
 
 **Example message format with custom keys:**
-``
+```
 {
   "msgtype": "m.text",
   "body": "[Alice/VeryCoolMeshnet]: Hello from my very cool meshnet!",
   "meshtastic_longname": "Alice",
   "meshtastic_meshnet": "VeryCoolMeshnet"
 }
-``
+```
 
 ## 3. Use Cases
 
