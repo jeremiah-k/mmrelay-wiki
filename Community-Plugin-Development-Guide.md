@@ -346,13 +346,8 @@ async def handle_meshtastic_message(self, packet, formatted_message, longname, m
 
 ```yaml
 meshtastic:
-  plugin_response_delay: 30  # Delay in seconds before plugin responses
+  plugin_response_delay: 5  # Delay in seconds before plugin responses; defaults to 3 but users might like to adjust it
 ```
-
-### Important Configuration Changes
-
-- **Global Response Delay**: The `plugin_response_delay` is now configured globally under the `meshtastic` section of your `config.yaml`. It is no longer specified per plugin.
-- **Per-Plugin Delay Removed**: Individual plugins no longer support a `plugin_response_delay` setting in their configuration. All plugins that utilize response delays will use the global setting.
 
 ## Best Practices
 
