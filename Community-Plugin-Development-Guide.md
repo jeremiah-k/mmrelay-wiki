@@ -20,7 +20,7 @@ The `BasePlugin` is designed to provide a consistent interface for all plugins. 
 - **Logging**: Each plugin has its own logger (`self.logger`) that helps with tracking actions and debugging.
 - **Data Storage**: Methods like `store_node_data()`, `get_node_data()`, and `delete_node_data()` enable plugins to persistently store data specific to nodes.
 - **Message Handling**: Plugins can react to incoming messages from Meshtastic or Matrix by implementing specific methods.
-- **Configuration Options**: Plugins can access configuration options like `plugin_response_delay` and `channels` from the `config.yaml` file.
+- **Configuration Options**: Plugins can access configuration options like `channels` from the `config.yaml` file.
 
 The two key methods that each plugin must implement are:
 
@@ -286,7 +286,14 @@ async def handle_meshtastic_message(self, packet, formatted_message, longname, m
     return False  # Indicate that we did not handle the message
 ```
 
-**Note on Response Delay**: If your plugin automatically responds to mesh commands, it's important to respect the `plugin_response_delay` configuration option. You can retrieve the configured delay using `self.get_response_delay()` and apply it before sending your response, as shown in the example above. This helps in managing network traffic and prevents overwhelming the mesh network with rapid replies.
+**Note on Response Delay**: If your plugin automatically responds to mesh commands, it's important to respect the `plugin_response_delay` configuration option. The `plugin_response_delay` is now set globally under the `meshtastic` section in `config.yaml`. You can retrieve the configured delay using `self.get_response_delay()` and apply it before sending your response, as shown in the example above. This helps in managing network traffic and prevents overwhelming the mesh network with rapid replies.
+
+**Example `config.yaml` Setting:**
+
+```yaml
+meshtastic:
+  plugin_response_delay: 3  # Delay in seconds before plugin responses. The default is 3, but this option allows the user to configure it how they want.
+```
 
 ## Best Practices
 
@@ -294,7 +301,7 @@ async def handle_meshtastic_message(self, packet, formatted_message, longname, m
 2. **Keep Plugins Modular**: Aim for each plugin to handle a distinct piece of functionality. This makes it easier to maintain and debug.
 3. **Avoid Blocking Operations**: Since the relay is an asynchronous application, be careful not to use blocking calls that could delay message handling.
 4. **Respect Plugin Priorities**: Set plugin priorities appropriately by defining the `priority` attribute within your plugin class to control the order in which messages are processed by different plugins.
-5. **Handle Response Delays**: If your plugin sends automatic responses, use `await asyncio.sleep(self.get_response_delay())` to respect the configured response delay.
+5. **Handle Response Delays**: If your plugin sends automatic responses, use `await asyncio.sleep(self.get_response_delay())` to respect the globally configured response delay.
 6. **Manage Channel Responses**: Use `self.is_channel_enabled(channel, is_direct_message=is_direct_message)` to control where your plugin responds and to ensure it handles DMs appropriately.
 
 ## Next Steps
