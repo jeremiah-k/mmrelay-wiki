@@ -4,7 +4,7 @@ Welcome to the MMRelay plugin development guide! This document will get you star
 
 To develop plugins for MMRelay, you'll need:
 
-- Python 3.9+
+- Python 3.8+
 - A working installation of the MMRelay application.
 - Familiarity with Python and some experience with asynchronous programming (if you're new to these, this is a good way to learn!).
 - A text editor or IDE (e.g., VS Code, PyCharm. I prefer [VSCodium](https://vscodium.com/)).
@@ -45,7 +45,7 @@ For this example, create a file named `simple_responder.py` in your project repo
 
 Every plugin must inherit from `BasePlugin` and set its unique `plugin_name`. Here's the complete code for the `simple_responder` plugin:
 
-``python
+```python
 from plugins.base_plugin import BasePlugin
 from meshtastic_utils import connect_meshtastic
 from matrix_utils import bot_command
@@ -70,7 +70,7 @@ class Plugin(BasePlugin):
             await self.send_matrix_message(room.room_id, "Hello from Matrix!")
             return True  # Indicate that we handled the message
         return False  # Indicate that we did not handle the message
-``
+```
 
 This example avoids complexities of channel and DM handling. It uses the `bot_command` function from `matrix_utils.py` to check if the message is a command directed at the bot, and `connect_meshtastic` from `meshtastic_utils.py` to send a message to the mesh network.
 
@@ -78,29 +78,29 @@ This example avoids complexities of channel and DM handling. It uses the `bot_co
 
 To enable your plugin, add it to your `config.yaml`. This tells the relay which plugins are active:
 
-``yaml
+```yaml
 custom-plugins:
   simple_responder:
     active: true
-``
+```
 
 If your plugin is hosted in a repository and you want the relay to clone it automatically, specify the repository and tag:
 
-``yaml
+```yaml
 community-plugins:
   simple_responder:
     active: true
     repository: https://github.com/YourUsername/SimpleResponder.git
     tag: main
-``
+```
 
 ### Step 4: Running and Testing the Plugin
 
 After adding the plugin to your configuration, restart the relay. You should see a line in your log indicating that the **simple_responder** plugin has started:
 
-``bash
+```bash
 DEBUG:Plugin:simple_responder:Started with priority=10
-``
+```
 
 You can then send messages via Meshtastic or Matrix to verify that the plugin is working as expected.
 
@@ -110,7 +110,7 @@ Now, let's create a slightly more complex **HelloWorld** plugin. This plugin wil
 
 Create a file named `hello_world.py` and add the following code:
 
-``python
+```python
 from plugins.base_plugin import BasePlugin
 
 class Plugin(BasePlugin):
@@ -123,7 +123,7 @@ class Plugin(BasePlugin):
     async def handle_room_message(self, room, event, full_message):
         self.logger.debug("Hello world, Matrix")
         return False  # Indicate that we did not handle the message
-``
+```
 
 Activate this plugin in your `config.yaml` just like you did with the `simple_responder` plugin.
 
@@ -136,7 +136,7 @@ Besides the methods in `BasePlugin`, there are several functions in the relay's 
 
      **Example Usage**:
 
-    ``python
+    ```python
     from matrix_utils import bot_command
 
     async def handle_room_message(self, room, event, full_message):
@@ -145,16 +145,16 @@ Besides the methods in `BasePlugin`, there are several functions in the relay's 
             await self.send_matrix_message(room.room_id, "System is running smoothly.")
             return True  # Indicate that we handled the message
         return False
-    ``
+    ```
 
 -   **Meshtastic Utilities**:
     -   `connect_meshtastic()`: A function from `meshtastic_utils.py` that returns the Meshtastic client interface. Useful for sending messages or accessing node information.
 
-    ``python
+    ```python
     from meshtastic_utils import connect_meshtastic
 
     meshtastic_client = connect_meshtastic()
-    ``
+    ```
 
 -   **Database Utilities**:
     -   For storing plugin-specific data, use the data persistence methods provided by `BasePlugin`. If you need to access node information like long names or short names, you can use functions from `db_utils.py`.
@@ -162,12 +162,12 @@ Besides the methods in `BasePlugin`, there are several functions in the relay's 
         -   `get_longname(meshtastic_id)`: Retrieve the longname for a given Meshtastic ID.
         -   `get_shortname(meshtastic_id)`: Retrieve the shortname for a given Meshtastic ID.
 
-    ``python
+    ```python
     from db_utils import get_longname, get_shortname
 
     longname = get_longname(sender_id)
     shortname = get_shortname(sender_id)
-    ``
+    ```
 
 ## Advanced Topics
 
@@ -181,31 +181,31 @@ Plugins can respond differently to DMs and messages in specific channels. This i
 
 To make your plugin respond **only** to DMs and ignore all channel messages, set the `channels` list to be empty:
 
-``yaml
+```yaml
 plugins:
   my_plugin:
     active: true
     channels: []  # Empty list: plugin only responds to DMs
-``
+```
 
 In your plugin, check whether to respond based on the channel and whether it's a DM using `is_channel_enabled`:
 
-``python
+```python
 if not self.is_channel_enabled(channel, is_direct_message=is_direct_message):
     self.logger.debug(f"Channel {channel} not enabled for plugin '{self.plugin_name}'")
     return False
-``
+```
 
 #### Responding to All Mapped Channels
 
 To make your plugin respond to all mapped channels (defined in `matrix_rooms`), either omit the `channels` setting or comment it out:
 
-``yaml
+```yaml
 plugins:
   my_plugin:
     active: true
     # channels: [0,1,3,4]  # Commented out or omitted; plugin responds to all mapped channels
-``
+```
 
 By default, if `channels` is not specified, the plugin responds to all mapped channels. The `is_channel_enabled` method handles this logic internally.
 
@@ -213,28 +213,28 @@ By default, if `channels` is not specified, the plugin responds to all mapped ch
 
 To make your plugin respond only to specific channels, list them in the `channels` setting:
 
-``yaml
+```yaml
 plugins:
   my_plugin:
     active: true
     channels: [0, 1, 3, 4]  # List of Meshtastic channels to respond to
-``
+```
 
 #### Handling Direct Messages (DMs)
 
 By default, plugins always respond to DMs if active, regardless of `channels` configuration. The `is_channel_enabled` method in `BasePlugin` ensures DMs are always enabled:
 
-``python
+```python
 def is_channel_enabled(self, channel, is_direct_message=False):
     if is_direct_message:
         return True  # Always respond to DMs if the plugin is active
     else:
         return channel in self.channels
-``
+```
 
 When processing a message, determine if it's a DM and pass `is_direct_message`:
 
-``python
+```python
 # Determine if the message is a direct message
 toId = packet.get("to")
 myId = meshtastic_client.myInfo.my_node_num  # Relay's own node number
@@ -246,7 +246,7 @@ else:
 
 if not self.is_channel_enabled(channel, is_direct_message=is_direct_message):
     return False
-``
+```
 
 This ensures your plugin responds appropriately to DMs and channel messages based on your configuration.
 
@@ -254,22 +254,22 @@ This ensures your plugin responds appropriately to DMs and channel messages base
 
 `BasePlugin` provides easy-to-use methods for saving and retrieving plugin-specific data. For instance, if your plugin needs to track statistics for each node:
 
-``python
+```python
 # Store node data
 self.store_node_data(meshtastic_id, node_data)
 
 # Retrieve node data
 node_data = self.get_node_data(meshtastic_id)
-``
+```
 
 ### Scheduling Background Tasks
 
 If your plugin needs to perform periodic tasks, use the built-in scheduling capabilities from `BasePlugin`. The `start()` method lets you set up recurring background jobs:
 
-``python
+```python
 def start(self):
     schedule.every(5).minutes.do(self.background_job)
-``
+```
 
 ### Handling Meshtastic-Specific Commands
 
@@ -277,7 +277,7 @@ You can create specific commands for handling messages from the Meshtastic netwo
 
 **Example Using Existing Functions**:
 
-``python
+```python
 from meshtastic_utils import connect_meshtastic
 
 async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
@@ -319,16 +319,16 @@ async def handle_meshtastic_message(self, packet, formatted_message, longname, m
                 )
             return True  # Indicate that we handled the message
     return False  # Indicate that we did not handle the message
-``
+```
 
 **Note on Response Delay**: If your plugin automatically responds to mesh commands, respect the `plugin_response_delay` configuration option. It's set globally under `meshtastic` in `config.yaml`. Retrieve it using `self.get_response_delay()` and apply it before sending your response, as shown above. This helps manage network traffic and prevents overwhelming the mesh network.
 
 **Example `config.yaml` Setting:**
 
-``yaml
+```yaml
 meshtastic:
   plugin_response_delay: 5  # Delay in seconds before plugin responses; defaults to 3
-``
+```
 
 ## Appendix: `bot_command()` Implementation
 
@@ -338,7 +338,7 @@ The `bot_command` function is a helper utility located in `matrix_utils.py`. It'
 
 For reference, here's the implementation of `bot_command()`:
 
-``python
+```python
 def bot_command(command, event):
     """
     Checks if the given command is directed at the bot,
@@ -362,7 +362,7 @@ def bot_command(command, event):
         return bool(re.match(pattern, full_message)) or bool(re.match(pattern, text_content))
     else:
         return False
-``
+```
 
 ## Best Practices
 
