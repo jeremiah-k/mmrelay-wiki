@@ -76,14 +76,6 @@ This example avoids complexities of channel and DM handling. It uses the `bot_co
 
 ### Step 3: Activate the Plugin in Your Configuration
 
-To enable your plugin, add it to your `config.yaml`. This tells the relay which plugins are active:
-
-```yaml
-custom-plugins:
-  simple_responder:
-    active: true
-```
-
 If your plugin is hosted in a repository and you want the relay to clone it automatically, specify the repository and tag:
 
 ```yaml
@@ -106,7 +98,7 @@ You can then send messages via Meshtastic or Matrix to verify that the plugin is
 
 ## Creating a "Hello World" Plugin
 
-Now, let's create a slightly more complex **HelloWorld** plugin. This plugin will simply log "Hello world" when it receives a message from either Meshtastic or Matrix, but won't send any responses.
+Now, let's create a **HelloWorld** plugin. This plugin will simply log "Hello world" when it receives a message from either Meshtastic or Matrix, but won't send any responses.
 
 Create a file named `hello_world.py` and add the following code:
 
