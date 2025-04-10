@@ -1,17 +1,37 @@
-Welcome to the MMRelay plugin development guide! This document will get you started with writing plugins for the relay system. It covers setting up a development environment, understanding the `BasePlugin` class, and creating your first plugin. This guide is here to help you extend the relay's functionality with custom plugins tailored to your specific needs.
+# Community Plugin Development Guide
+
+Welcome to the M<>M Relay plugin development guide! This document will get you started with writing plugins for the relay system. It covers setting up a development environment, understanding the `BasePlugin` class, and creating your first plugin. This guide is here to help you extend the relay's functionality with custom plugins tailored to your specific needs.
+
+## Changes in v1.0.0
+
+With the release of v1.0.0, there are some important changes to plugin development:
+
+- **New Plugin Locations**: Plugins are now stored in standardized locations:
+  - Core plugins: Included in the package
+  - Custom plugins: `~/.mmrelay/plugins/custom/`
+  - Community plugins: `~/.mmrelay/plugins/community/`
+
+- **Absolute Imports**: The codebase now uses absolute imports. When developing plugins, you should use:
+  ```python
+  from mmrelay.plugins.base_plugin import BasePlugin
+  from mmrelay.meshtastic_utils import connect_meshtastic
+  from mmrelay.matrix_utils import bot_command
+  ```
+
+- **Configuration Path**: Configuration is now stored at `~/.mmrelay/config.yaml` by default
 
 ## Prerequisites
 
-To develop plugins for MMRelay, you'll need:
+To develop plugins for M<>M Relay, you'll need:
 
-- Python 3.8+
-- A working installation of the MMRelay application.
-- Familiarity with Python and some experience with asynchronous programming (if you're new to these, this is a good way to learn!).
-- A text editor or IDE (e.g., VS Code, PyCharm. I prefer [VSCodium](https://vscodium.com/)).
+- Python 3.9+
+- A working installation of the M<>M Relay application
+- Familiarity with Python and some experience with asynchronous programming (if you're new to these, this is a good way to learn!)
+- A text editor or IDE (e.g., VS Code, PyCharm. I prefer [VSCodium](https://vscodium.com/))
 
 ## Understanding the Plugin System
 
-Plugins in MMRelay are Python classes that extend what the relay can do. All plugins inherit from a shared base class called `BasePlugin`. This class provides essential methods and utilities for message handling, logging, and data persistence. By using `BasePlugin` as your starting point, you can create plugins that interact with either the Meshtastic meshnet, Matrix rooms, or both.
+Plugins in M<>M Relay are Python classes that extend what the relay can do. All plugins inherit from a shared base class called `BasePlugin`. This class provides essential methods and utilities for message handling, logging, and data persistence. By using `BasePlugin` as your starting point, you can create plugins that interact with either the Meshtastic meshnet, Matrix rooms, or both.
 
 ### Structure of the Base Plugin
 
@@ -46,9 +66,9 @@ For this example, create a file named `simple_responder.py` in your project repo
 Every plugin must inherit from `BasePlugin` and set its unique `plugin_name`. Here's the complete code for the `simple_responder` plugin:
 
 ```python
-from plugins.base_plugin import BasePlugin
-from meshtastic_utils import connect_meshtastic
-from matrix_utils import bot_command
+from mmrelay.plugins.base_plugin import BasePlugin
+from mmrelay.meshtastic_utils import connect_meshtastic
+from mmrelay.matrix_utils import bot_command
 
 class Plugin(BasePlugin):
     plugin_name = "simple_responder"
@@ -103,7 +123,7 @@ Now, let's create a **HelloWorld** plugin. This plugin will simply log "Hello wo
 Create a file named `hello_world.py` and add the following code:
 
 ```python
-from plugins.base_plugin import BasePlugin
+from mmrelay.plugins.base_plugin import BasePlugin
 
 class Plugin(BasePlugin):
     plugin_name = "hello_world"
@@ -129,7 +149,7 @@ Besides the methods in `BasePlugin`, there are several functions in the relay's 
      **Example Usage**:
 
     ```python
-    from matrix_utils import bot_command
+    from mmrelay.matrix_utils import bot_command
 
     async def handle_room_message(self, room, event, full_message):
         if bot_command("status", event):
@@ -143,7 +163,7 @@ Besides the methods in `BasePlugin`, there are several functions in the relay's 
     -   `connect_meshtastic()`: A function from `meshtastic_utils.py` that returns the Meshtastic client interface. Useful for sending messages or accessing node information.
 
     ```python
-    from meshtastic_utils import connect_meshtastic
+    from mmrelay.meshtastic_utils import connect_meshtastic
 
     meshtastic_client = connect_meshtastic()
     ```
@@ -155,7 +175,7 @@ Besides the methods in `BasePlugin`, there are several functions in the relay's 
         -   `get_shortname(meshtastic_id)`: Retrieve the shortname for a given Meshtastic ID.
 
     ```python
-    from db_utils import get_longname, get_shortname
+    from mmrelay.db_utils import get_longname, get_shortname
 
     longname = get_longname(sender_id)
     shortname = get_shortname(sender_id)
@@ -270,7 +290,7 @@ You can create specific commands for handling messages from the Meshtastic netwo
 **Example Using Existing Functions**:
 
 ```python
-from meshtastic_utils import connect_meshtastic
+from mmrelay.meshtastic_utils import connect_meshtastic
 
 async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
     if "decoded" in packet and "text" in packet["decoded"]:

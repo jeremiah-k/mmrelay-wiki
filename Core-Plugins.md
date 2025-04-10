@@ -1,6 +1,8 @@
-M<>M Relay supports a plugin system to expand its capabilities.
+# Core Plugins
 
-Core plugins:
+M<>M Relay includes several built-in plugins that extend its functionality. These plugins can be enabled in your configuration file.
+
+## Available Core Plugins
 
 | Plugin      | Command         | Matrix Support | Radio Support | Description                                                        |
 | ----------  | --------------- | -------------- | ------------- | ------------------------------------------------------------------ |
@@ -12,47 +14,61 @@ Core plugins:
 | `telemetry` | `!airUtilTx`    | yes            | no            | Graph of avg Mesh airUtilTx for last 12 hours                      |
 | `mesh_relay`|                 | yes            | yes           | Relays radio packets between a Mesh and a Matrix room              |
 | `map`       | `!map`          | yes            | no            | Map of mesh radio nodes. Supports `zoom` and `size` to customize   |
+| `nodes`     | `!nodes`        | yes            | no            | List all nodes in the mesh network                                 |
 
-_Note: As of 11/24/24 the map_plugin needs maintenance before it is functional again, also the `mesh_relay` plugin is experimental and needs more work before its operational._
+_Note: The `mesh_relay` plugin is experimental and needs more work before it's fully operational._
 
-## How to enable a plugin
+## Plugin Locations
 
-In order to use a plugin it must be added to the plugins section of the configuration file `config.yaml` file and given an `active:true` value.
+As of v1.0.0, plugins are stored in standardized locations:
 
-For example, to enable the Ping plugin ensure the following is set in the configuration file:
+- **Core Plugins**: Included in the package
+- **Custom Plugins**: `~/.mmrelay/plugins/custom/`
+- **Community Plugins**: `~/.mmrelay/plugins/community/`
 
-```
+## Enabling Plugins
+
+To use a plugin, add it to the `plugins` section of your configuration file (`~/.mmrelay/config.yaml`) and set `active: true`:
+
+```yaml
 plugins:
   ping:
     active: true
+  map:
+    active: true
+  weather:
+    active: true
 ```
 
-When a plugin is activated they appear in the startup logs. The `map`, `ping` and `weather` plugins are loaded in the following example,
+When plugins are activated, they appear in the startup logs:
 
 ```
-2023-05-13 23:20:51 -0400 INFO:Meshtastic:Connecting to host meshtastic.local ...
-2023-05-13 23:20:54 -0400 INFO:Plugins:Loaded map
-2023-05-13 23:20:54 -0400 INFO:Plugins:Loaded ping
-2023-05-13 23:20:54 -0400 INFO:Plugins:Loaded weather
-2023-05-13 23:20:54 -0400 INFO:Matrix:Connecting ...
+INFO: Plugins loaded: map, ping, weather
 ```
 
-## How to use plugin commands
+## Using Plugin Commands
 
-A plugin is called by sending its command to the M<>M Relay bot.
+Call a plugin by sending its command to the M<>M Relay bot in your Matrix room.
 
-For example to call the map plugin of the `Meshtastic Bot` message it `!map`:
+For example, to use the map plugin, send:
 
-![image](https://github.com/geoffwhittington/meshtastic-matrix-relay/assets/1770544/92e045eb-9989-42e2-b9bf-f8fb839661de)
+```
+!map
+```
 
-## Map plugin
+## Map Plugin
 
-The Map plugin displays mesh radio nodes on a world map. Node locations are randomly placed up to 10km away from their actual location in order to hide their true location. By default the generated map has `size` width=1000px and height=1000px. It has a `zoom` value of 8. Lower zoom values show less detail and more of the Earth.
+The Map plugin displays mesh radio nodes on a world map. Node locations are randomly placed up to 10km away from their actual location to protect privacy.
 
-Here are some examples of how to use the plugin:
+### Map Options
 
-* `!map`: Shows the radio nodes on a world map with a zoom of `8` default size of width=`1000`px height=`1000`px
-* `!map size=800,900`: Shows the radio nodes on a world map of size width=`800`px height=`900`px
-* `!map zoom=5 size=800,900`: Shows the radio nodes on a world map zoomed out. It has size width=`800`px height=`900`px
+- **Default**: `!map` - Shows nodes with zoom level 8 and size 1000x1000px
+- **Custom Size**: `!map size=800,900` - Sets width=800px, height=900px
+- **Custom Zoom**: `!map zoom=5` - Lower zoom values show less detail and more area
+- **Combined**: `!map zoom=5 size=800,900` - Custom zoom and size
 
-We also encourage users to contribute their own plugins to the project through our new (Community Plugins)[https://github.com/geoffwhittington/meshtastic-matrix-relay/wiki/Community-Plugins] framework.
+## Creating Your Own Plugins
+
+We encourage users to contribute their own plugins. See the [Community Plugin Development Guide](Community-Plugin-Development-Guide.md) for details.
+
+For a list of available community plugins, see the [Community Plugin List](Community-Plugin-List.md).
