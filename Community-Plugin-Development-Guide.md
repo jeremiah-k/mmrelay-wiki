@@ -74,7 +74,7 @@ class Plugin(BasePlugin):
     plugin_name = "simple_responder"
 
     def __init__(self):
-        self.plugin_name = "simple_responder"  # Important: Always initialize in __init__
+        self.plugin_name = "simple_responder"  # IMPORTANT: Set this BEFORE calling super().__init__()
         super().__init__()
 
     async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
@@ -135,7 +135,7 @@ class Plugin(BasePlugin):
     plugin_name = "hello_world"
 
     def __init__(self):
-        self.plugin_name = "hello_world"  # Important: Always initialize in __init__
+        self.plugin_name = "hello_world"  # IMPORTANT: Set this BEFORE calling super().__init__()
         super().__init__()
 
     async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
@@ -149,9 +149,20 @@ class Plugin(BasePlugin):
 
 Activate this plugin in your `config.yaml` just like you did with the `simple_responder` plugin.
 
-## Plugin Name Initialization: An Important Detail
+## Plugin Name Initialization: A Critical Detail
 
 You might have noticed that in both examples, we define `plugin_name` twice: once as a class variable and once in the `__init__` method. This isn't redundant—it's actually crucial for proper plugin operation.
+
+### Initialization Order Matters
+
+The order of operations in your plugin's `__init__` method is critical:
+
+1. **FIRST**: Set `self.plugin_name`
+2. **THEN**: Call `super().__init__()`
+
+This is because `BasePlugin.__init__()` relies on `self.plugin_name` being set before it runs. If you call `super().__init__()` first, and then assign `self.plugin_name` afterward, the parent constructor runs without knowledge of the plugin's name, which causes failures in command recognition and plugin registration.
+
+### Why This Is Important
 
 When your plugin uses `self.plugin_name` in instance methods (like checking for commands with `f"!{self.plugin_name}"` in message text), it needs to be properly initialized in the `__init__` method. Without this initialization, commands won't be recognized correctly.
 
@@ -161,7 +172,9 @@ if f"!{self.plugin_name}" not in message.lower():
     return False
 ```
 
-Would fail silently if `self.plugin_name` wasn't initialized in `__init__`, causing the plugin to ignore valid commands.
+Would fail silently if `self.plugin_name` wasn't initialized in `__init__` before calling `super().__init__()`, causing the plugin to ignore valid commands.
+
+### The Correct Pattern
 
 Always follow this pattern in your plugins:
 ```python
@@ -170,10 +183,10 @@ class Plugin(BasePlugin):
 
     def __init__(self):
         self.plugin_name = "your_plugin_name"  # Must match the class variable
-        super().__init__()
+        super().__init__()  # Call parent constructor AFTER setting plugin_name
 ```
 
-This ensures your plugin will correctly process commands and work as expected.
+This ensures your plugin will correctly process commands and work as expected. The class-level attribute defines a default for the class, but `BasePlugin.__init__()` operates at the instance level and reads `self.plugin_name`. Setting it inside `__init__()` before calling `super().__init__()` ensures correct behavior at the instance level.
 
 ## Useful Functions from Other Modules
 
