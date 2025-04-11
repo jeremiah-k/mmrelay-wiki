@@ -73,6 +73,10 @@ from mmrelay.matrix_utils import bot_command
 class Plugin(BasePlugin):
     plugin_name = "simple_responder"
 
+    def __init__(self):
+        self.plugin_name = "simple_responder"  # Important: Always initialize in __init__
+        super().__init__()
+
     async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
         if "decoded" in packet and "text" in packet["decoded"]:
             message = packet["decoded"]["text"].strip()
@@ -93,6 +97,8 @@ class Plugin(BasePlugin):
 ```
 
 This example avoids complexities of channel and DM handling. It uses the `bot_command` function from `matrix_utils.py` to check if the message is a command directed at the bot, and `connect_meshtastic` from `meshtastic_utils.py` to send a message to the mesh network.
+
+Notice that we define `plugin_name` twice: once as a class variable and once in the `__init__` method. This is important because the instance methods (like `handle_meshtastic_message`) use `self.plugin_name`, which needs to be initialized in `__init__`. Without this initialization, commands that use `self.plugin_name` in f-strings (like `f"!{self.plugin_name}"`) won't work correctly.
 
 ### Step 3: Activate the Plugin in Your Configuration
 
@@ -128,6 +134,10 @@ from mmrelay.plugins.base_plugin import BasePlugin
 class Plugin(BasePlugin):
     plugin_name = "hello_world"
 
+    def __init__(self):
+        self.plugin_name = "hello_world"  # Important: Always initialize in __init__
+        super().__init__()
+
     async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
         self.logger.debug("Hello world, Meshtastic")
         return False  # Indicate that we did not handle the message
@@ -138,6 +148,32 @@ class Plugin(BasePlugin):
 ```
 
 Activate this plugin in your `config.yaml` just like you did with the `simple_responder` plugin.
+
+## Plugin Name Initialization: An Important Detail
+
+You might have noticed that in both examples, we define `plugin_name` twice: once as a class variable and once in the `__init__` method. This isn't redundant—it's actually crucial for proper plugin operation.
+
+When your plugin uses `self.plugin_name` in instance methods (like checking for commands with `f"!{self.plugin_name}"` in message text), it needs to be properly initialized in the `__init__` method. Without this initialization, commands won't be recognized correctly.
+
+For example, in the weather plugin, this check:
+```python
+if f"!{self.plugin_name}" not in message.lower():
+    return False
+```
+
+Would fail silently if `self.plugin_name` wasn't initialized in `__init__`, causing the plugin to ignore valid commands.
+
+Always follow this pattern in your plugins:
+```python
+class Plugin(BasePlugin):
+    plugin_name = "your_plugin_name"  # Class variable for compatibility
+
+    def __init__(self):
+        self.plugin_name = "your_plugin_name"  # Must match the class variable
+        super().__init__()
+```
+
+This ensures your plugin will correctly process commands and work as expected.
 
 ## Useful Functions from Other Modules
 
@@ -385,6 +421,7 @@ def bot_command(command, event):
 5. **Handle Response Delays**: If your plugin sends automatic responses, use `await asyncio.sleep(self.get_response_delay())` to respect the globally configured response delay.
 6. **Manage Channel Responses**: Use `self.is_channel_enabled(channel, is_direct_message=is_direct_message)` to control where your plugin responds and ensure it handles DMs appropriately.
 7. **Leverage Existing Functions**: Utilize functions from `matrix_utils.py`, `meshtastic_utils.py`, and `db_utils.py` to simplify your plugin code and maintain consistency.
+8. **Initialize Plugin Name Properly**: Always initialize `self.plugin_name` in the `__init__` method, even though it's also defined as a class variable, to ensure instance methods work correctly.
 
 ## Next Steps
 
