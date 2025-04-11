@@ -4,9 +4,9 @@
 
 Welcome to the M<>M Relay plugin development guide! This document will get you started with writing plugins for the relay system. It covers setting up a development environment, understanding the `BasePlugin` class, and creating your first plugin. This guide is here to help you extend the relay's functionality with custom plugins tailored to your specific needs.
 
-## Changes in v1.0.0
+## Changes in v1.0
 
-With the release of v1.0.0, there are some important changes to plugin development:
+With the release of v1.0, there are some important changes to plugin development:
 
 - **New Plugin Locations**: Plugins are now stored in standardized locations:
   - Core plugins: Included in the package
