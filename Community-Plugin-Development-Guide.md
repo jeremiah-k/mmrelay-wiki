@@ -1,5 +1,7 @@
 # Community Plugin Development Guide
 
+> ⚠️ **Important Note for Existing Plugin Authors**: If you are updating an old plugin, check your `__init__()` method order. The order of operations is critical - you must set `self.plugin_name` **before** calling `super().__init__()`. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for details.
+
 Welcome to the M<>M Relay plugin development guide! This document will get you started with writing plugins for the relay system. It covers setting up a development environment, understanding the `BasePlugin` class, and creating your first plugin. This guide is here to help you extend the relay's functionality with custom plugins tailored to your specific needs.
 
 ## Changes in v1.0.0
@@ -36,6 +38,8 @@ Plugins in M<>M Relay are Python classes that extend what the relay can do. All 
 ### Structure of the Base Plugin
 
 The `BasePlugin` is designed to provide a consistent interface for all plugins. Here's a quick look at some of its important features:
+
+> ⚠️ **Critical Note**: When creating a plugin, you must set `self.plugin_name` **before** calling `super().__init__()` in your `__init__` method. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for details.
 
 -   **Logging**: Each plugin has its own logger (`self.logger`) to help with tracking actions and debugging.
 -   **Data Storage**: Methods like `store_node_data()`, `get_node_data()`, and `delete_node_data()` let plugins persistently store data specific to nodes.
@@ -74,7 +78,9 @@ class Plugin(BasePlugin):
     plugin_name = "simple_responder"
 
     def __init__(self):
-        self.plugin_name = "simple_responder"  # IMPORTANT: Set this BEFORE calling super().__init__()
+        # IMPORTANT: Set plugin_name BEFORE calling super().__init__()
+        # See "Plugin Name Initialization: A Critical Detail" section for explanation
+        self.plugin_name = "simple_responder"
         super().__init__()
 
     async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
@@ -135,7 +141,9 @@ class Plugin(BasePlugin):
     plugin_name = "hello_world"
 
     def __init__(self):
-        self.plugin_name = "hello_world"  # IMPORTANT: Set this BEFORE calling super().__init__()
+        # IMPORTANT: Set plugin_name BEFORE calling super().__init__()
+        # See "Plugin Name Initialization: A Critical Detail" section for explanation
+        self.plugin_name = "hello_world"
         super().__init__()
 
     async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
@@ -434,7 +442,7 @@ def bot_command(command, event):
 5. **Handle Response Delays**: If your plugin sends automatic responses, use `await asyncio.sleep(self.get_response_delay())` to respect the globally configured response delay.
 6. **Manage Channel Responses**: Use `self.is_channel_enabled(channel, is_direct_message=is_direct_message)` to control where your plugin responds and ensure it handles DMs appropriately.
 7. **Leverage Existing Functions**: Utilize functions from `matrix_utils.py`, `meshtastic_utils.py`, and `db_utils.py` to simplify your plugin code and maintain consistency.
-8. **Initialize Plugin Name Properly**: Always initialize `self.plugin_name` in the `__init__` method, even though it's also defined as a class variable, to ensure instance methods work correctly.
+8. **Initialize Plugin Name Properly**: Always initialize `self.plugin_name` in the `__init__` method **before** calling `super().__init__()`, even though it's also defined as a class variable. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for a detailed explanation.
 
 ## Next Steps
 
