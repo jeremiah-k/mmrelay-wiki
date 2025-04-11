@@ -401,7 +401,7 @@ meshtastic:
 
 ## Appendix: `bot_command()` Implementation
 
-The `bot_command` function is a helper utility located in `matrix_utils.py`. It's designed to figure out if an incoming Matrix message is a command directed at your bot. It handles various ways different Matrix clients format messages and mentions.
+The `bot_command` function is a helper utility located in `matrix_utils.py`. It's designed to figure out if an incoming Matrix message is a command directed at your bot. The reason the regex is so complicated is because it handles the various different ways Matrix clients format messages and mentions.
 
 **Note: You don't need to modify this function.** It's already included in the `matrix_utils.py` file. You can simply import and use it in your plugins as shown in the examples.
 
