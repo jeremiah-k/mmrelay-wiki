@@ -17,8 +17,10 @@ With the release of v1.0, there are some important changes to plugin development
   ```python
   from mmrelay.plugins.base_plugin import BasePlugin
   from mmrelay.meshtastic_utils import connect_meshtastic
-  from mmrelay.matrix_utils import bot_command
+  from mmrelay.matrix_utils import bot_command, matrix_client
   ```
+
+- **Global Matrix Client**: Always use the global `matrix_client` instance from `matrix_utils` or the `send_matrix_message()` method from `BasePlugin`. Never call `connect_matrix()` directly in your plugins.
 
 - **Configuration Path**: Configuration is now stored at `~/.mmrelay/config.yaml` by default
 
@@ -97,6 +99,8 @@ class Plugin(BasePlugin):
 
     async def handle_room_message(self, room, event, full_message):
         if bot_command("hello", event):
+            # Use the send_matrix_message method from BasePlugin
+            # This uses the global matrix_client internally
             await self.send_matrix_message(room.room_id, "Hello from Matrix!")
             return True  # Indicate that we handled the message
         return False  # Indicate that we did not handle the message
@@ -202,11 +206,12 @@ Besides the methods in `BasePlugin`, there are several functions in the relay's 
 
 -   **Matrix Utilities**:
     -   `bot_command(command, event)`: A function from `matrix_utils.py` that helps determine if a Matrix message is a command directed at the bot.
+    -   `matrix_client`: The global Matrix client instance. Always use this instead of calling `connect_matrix()` to avoid reinitializing the client.
 
      **Example Usage**:
 
     ```python
-    from mmrelay.matrix_utils import bot_command
+    from mmrelay.matrix_utils import bot_command, matrix_client
 
     async def handle_room_message(self, room, event, full_message):
         if bot_command("status", event):
@@ -215,6 +220,8 @@ Besides the methods in `BasePlugin`, there are several functions in the relay's 
             return True  # Indicate that we handled the message
         return False
     ```
+
+    > ⚠️ **Important Note**: Never call `connect_matrix()` directly in your plugins. Always use the global `matrix_client` instance or the `send_matrix_message()` method provided by `BasePlugin`. Calling `connect_matrix()` will reinitialize the Matrix client and cause unnecessary credential reloading.
 
 -   **Meshtastic Utilities**:
     -   `connect_meshtastic()`: A function from `meshtastic_utils.py` that returns the Meshtastic client interface. Useful for sending messages or accessing node information.
@@ -441,8 +448,9 @@ def bot_command(command, event):
 4. **Respect Plugin Priorities**: Set plugin priorities appropriately by defining the `priority` attribute within your plugin class to control the order of message processing.
 5. **Handle Response Delays**: If your plugin sends automatic responses, use `await asyncio.sleep(self.get_response_delay())` to respect the globally configured response delay.
 6. **Manage Channel Responses**: Use `self.is_channel_enabled(channel, is_direct_message=is_direct_message)` to control where your plugin responds and ensure it handles DMs appropriately.
-7. **Leverage Existing Functions**: Utilize functions from `matrix_utils.py`, `meshtastic_utils.py`, and `db_utils.py` to simplify your plugin code and maintain consistency.
-8. **Initialize Plugin Name Properly**: Always initialize `self.plugin_name` in the `__init__` method **before** calling `super().__init__()`, even though it's also defined as a class variable. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for a detailed explanation.
+7. **Use Global Matrix Client**: Always use the global `matrix_client` from `matrix_utils` or the `send_matrix_message()` method from `BasePlugin`. Never call `connect_matrix()` directly, as this will reinitialize the client and cause unnecessary credential reloading.
+8. **Leverage Existing Functions**: Utilize functions from `matrix_utils.py`, `meshtastic_utils.py`, and `db_utils.py` to simplify your plugin code and maintain consistency.
+9. **Initialize Plugin Name Properly**: Always initialize `self.plugin_name` in the `__init__` method **before** calling `super().__init__()`, even though it's also defined as a class variable. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for a detailed explanation.
 
 ## Next Steps
 
