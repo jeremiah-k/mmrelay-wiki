@@ -13,6 +13,10 @@ With the release of v1.0, there are some important changes to plugin development
   - Custom plugins: `~/.mmrelay/plugins/custom/`
   - Community plugins: `~/.mmrelay/plugins/community/`
 
+- **Standardized Data Storage**: Plugin data should be stored in standardized locations:
+  - Database data: Use `BasePlugin` methods like `store_node_data()` and `get_node_data()`
+  - File data: Use `self.get_plugin_data_dir()` to get `~/.mmrelay/data/plugins/<plugin_name>/`
+
 - **Absolute Imports**: The codebase now uses absolute imports. When developing plugins, you should use:
   ```python
   from mmrelay.plugins.base_plugin import BasePlugin
@@ -328,14 +332,104 @@ This ensures your plugin responds appropriately to DMs and channel messages base
 
 ### Using Data Persistence
 
-`BasePlugin` provides easy-to-use methods for saving and retrieving plugin-specific data. For instance, if your plugin needs to track statistics for each node:
+MMRelay provides two main methods for plugins to store data:
+
+1. **Database Storage**: For structured data that needs to be queried or updated frequently
+2. **File System Storage**: For larger files, binary data, or data that needs to be accessed by external tools
+
+#### Database Storage
+
+`BasePlugin` provides easy-to-use methods for saving and retrieving plugin-specific data in the SQLite database:
 
 ```python
-# Store node data
+# Store data for a specific node
 self.store_node_data(meshtastic_id, node_data)
 
-# Retrieve node data
+# Set data for a specific node (replaces existing data)
+self.set_node_data(meshtastic_id, node_data)
+
+# Delete data for a specific node
+self.delete_node_data(meshtastic_id)
+
+# Get data for a specific node
 node_data = self.get_node_data(meshtastic_id)
+
+# Get all data for this plugin
+all_data = self.get_data()
+```
+
+This is ideal for storing configuration settings, user preferences, or small amounts of structured data.
+
+#### File System Storage
+
+For larger files or binary data, MMRelay provides a standardized directory structure:
+
+```
+~/.mmrelay/data/plugins/<plugin_name>/
+```
+
+The `BasePlugin` class provides a method to get this directory:
+
+```python
+# Get the plugin's data directory
+data_dir = self.get_plugin_data_dir()
+
+# Get a subdirectory within the plugin's data directory
+# This will create the subdirectory if it doesn't exist
+subdir = self.get_plugin_data_dir('my_subdirectory')
+```
+
+##### Example: Storing Files
+
+```python
+import os
+from mmrelay.plugins.base_plugin import BasePlugin
+
+class Plugin(BasePlugin):
+    plugin_name = "my_plugin"
+
+    def __init__(self):
+        self.plugin_name = "my_plugin"
+        super().__init__()
+
+        # Get the plugin's data directory
+        self.data_dir = self.get_plugin_data_dir()
+
+        # Or get a specific subdirectory
+        self.images_dir = self.get_plugin_data_dir('images')
+
+    def save_file(self, filename, content):
+        file_path = os.path.join(self.data_dir, filename)
+        with open(file_path, 'wb') as f:
+            f.write(content)
+```
+
+##### Custom Data Directories
+
+If your plugin needs to store data in a custom location (like a user-specified directory outside of `~/.mmrelay`), you can support this through configuration:
+
+```python
+# Check for custom directory in config
+custom_dir = self.config.get('data_directory')
+if custom_dir:
+    # Expand user directory if needed (e.g., ~/my_data -> /home/user/my_data)
+    custom_dir = os.path.expanduser(custom_dir)
+    self.logger.info(f"Using custom data directory from config: {custom_dir}")
+    self.data_dir = custom_dir
+    # Ensure the directory exists
+    os.makedirs(self.data_dir, exist_ok=True)
+else:
+    # Use the standardized plugin data directory
+    self.data_dir = self.get_plugin_data_dir()
+```
+
+This allows users to specify their preferred data location in the plugin's configuration:
+
+```yaml
+plugins:
+  my_plugin:
+    active: true
+    data_directory: ~/my_plugin_data
 ```
 
 ### Scheduling Background Tasks
@@ -450,7 +544,10 @@ def bot_command(command, event):
 6. **Manage Channel Responses**: Use `self.is_channel_enabled(channel, is_direct_message=is_direct_message)` to control where your plugin responds and ensure it handles DMs appropriately.
 7. **Use Global Matrix Client**: Always use the global `matrix_client` from `matrix_utils` or the `send_matrix_message()` method from `BasePlugin`. Never call `connect_matrix()` directly, as this will reinitialize the client and cause unnecessary credential reloading.
 8. **Leverage Existing Functions**: Utilize functions from `matrix_utils.py`, `meshtastic_utils.py`, and `db_utils.py` to simplify your plugin code and maintain consistency.
-9. **Initialize Plugin Name Properly**: Always initialize `self.plugin_name` in the `__init__` method **before** calling `super().__init__()`, even though it's also defined as a class variable. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for a detailed explanation.
+9. **Use Standardized Data Storage**: Store plugin data in the standardized locations:
+   - For structured data: Use the database methods (`store_node_data()`, `get_node_data()`, etc.)
+   - For files and binary data: Use `self.get_plugin_data_dir()` to get the plugin's data directory
+10. **Initialize Plugin Name Properly**: Always initialize `self.plugin_name` in the `__init__` method **before** calling `super().__init__()`, even though it's also defined as a class variable. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for a detailed explanation.
 
 ## Next Steps
 
