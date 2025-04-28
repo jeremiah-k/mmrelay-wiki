@@ -28,6 +28,12 @@ With the release of v1.0, there are some important changes to plugin development
 
 - **Configuration Path**: Configuration is now stored at `~/.mmrelay/config.yaml` by default
 
+- **Separate Branch and Tag Parameters**: Community plugins now support separate `branch:` and `tag:` parameters in config.yaml, allowing for more precise version control.
+
+- **Automatic Dependency Installation**: The plugin system now automatically detects and installs dependencies from requirements.txt files, with support for both pip and pipx installations.
+
+- **Improved Error Handling**: Better error messages and logging for plugin loading issues, with specific guidance for resolving dependency problems.
+
 ## Prerequisites
 
 To develop plugins for M<>M Relay, you'll need:
@@ -116,17 +122,35 @@ Notice that we define `plugin_name` twice: once as a class variable and once in 
 
 ### Step 3: Activate the Plugin in Your Configuration
 
-If your plugin is hosted in a repository and you want the relay to clone it automatically, specify the repository and tag:
+If your plugin is hosted in a repository and you want the relay to clone it automatically, specify the repository and either a branch or tag:
+
+> **Note**: The plugin system now supports separate `branch:` and `tag:` parameters. Use `branch:` for development branches and `tag:` for specific version tags. If both are specified, the tag will take precedence.
 
 ```yaml
 community-plugins:
   simple_responder:
     active: true
     repository: https://github.com/YourUsername/SimpleResponder.git
-    tag: main
+    branch: main  # Use branch: for branches
+    # OR
+    # tag: v1.0.0  # Use tag: for specific version tags
 ```
 
-### Step 4: Running and Testing the Plugin
+### Step 4: Adding Dependencies
+
+If your plugin requires additional Python packages, you can include a `requirements.txt` file in your repository. The plugin loader will automatically detect and install these dependencies when the plugin is loaded.
+
+```
+# Example requirements.txt
+gpxpy==1.5.0
+requests==2.28.1
+```
+
+The plugin system will automatically detect whether mmrelay is installed with pip or pipx and use the appropriate method to install dependencies:
+- For pip installations: `pip install -r requirements.txt`
+- For pipx installations: `pipx inject mmrelay <package>` for each package
+
+### Step 5: Running and Testing the Plugin
 
 After adding the plugin to your configuration, restart the relay. You should see a line in your log indicating that the **simple_responder** plugin has started:
 
@@ -548,6 +572,28 @@ def bot_command(command, event):
    - For structured data: Use the database methods (`store_node_data()`, `get_node_data()`, etc.)
    - For files and binary data: Use `self.get_plugin_data_dir()` to get the plugin's data directory
 10. **Initialize Plugin Name Properly**: Always initialize `self.plugin_name` in the `__init__` method **before** calling `super().__init__()`, even though it's also defined as a class variable. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for a detailed explanation.
+
+## Example Configuration
+
+Here's a complete example of a community plugin configuration with all available options:
+
+```yaml
+community-plugins:
+  gpxtracker:
+    active: true
+    repository: https://github.com/jeremiah-k/MMR-GPXTRacker.git
+    # Use either tag or branch:
+    tag: v1.0.0  # For a specific tag
+    # OR
+    branch: main  # For a specific branch
+    # Optional custom data directory:
+    gpx_directory: "~/my_gpx_files"  # Custom directory for GPX files
+    # Optional plugin-specific configuration:
+    allowed_device_ids:
+      - "*"  # Allow all devices
+    # Optional priority setting:
+    priority: 50  # Default is 100, lower numbers run first
+```
 
 ## Next Steps
 
