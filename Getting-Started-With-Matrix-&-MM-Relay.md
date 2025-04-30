@@ -1,5 +1,3 @@
-# Getting Started With Matrix & M<>M Relay
-
 This guide will help you get started with Matrix and M<>M Relay.
 
 ## Setting Up Matrix
