@@ -1,5 +1,3 @@
-# Third-Party Projects
-
 Below is a list of unofficial third-party projects built using M<>M Relay. These projects extend the functionality of M<>M Relay in various ways.
 
 ## Docker Implementations
