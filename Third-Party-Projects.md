@@ -13,7 +13,7 @@ Below is a list of unofficial third-party projects built using M<>M Relay. These
 - [MMRELAYNODE](https://github.com/mate71pl/mmrelaynode)  
   A custom implementation of M<>M Relay by **mate71pl** with additional features and modifications.
 
-## Note on Compatibility with v1.0.0
+## Note on Compatibility with v1.0
 
 If you're using any of these third-party projects, be aware that they may need updates to be compatible with M<>M Relay v1.0.0. Check the respective repositories for updates or compatibility information.
 
