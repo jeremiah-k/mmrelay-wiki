@@ -1,5 +1,3 @@
-# Community Plugin Development Guide
-
 > ⚠️ **Important Note for Existing Plugin Authors**: If you are updating an old plugin, check your `__init__()` method order. The order of operations is critical - you must set `self.plugin_name` **before** calling `super().__init__()`. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for details.
 
 Welcome to the M<>M Relay plugin development guide! This document will get you started with writing plugins for the relay system. It covers setting up a development environment, understanding the `BasePlugin` class, and creating your first plugin. This guide is here to help you extend the relay's functionality with custom plugins tailored to your specific needs.
