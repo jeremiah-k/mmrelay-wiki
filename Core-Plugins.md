@@ -1,5 +1,3 @@
-# Core Plugins
-
 M<>M Relay includes several built-in plugins that extend its functionality. These plugins can be enabled in your configuration file.
 
 ## Available Core Plugins
