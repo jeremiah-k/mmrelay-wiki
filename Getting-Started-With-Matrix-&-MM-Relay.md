@@ -1,4 +1,4 @@
-This guide will help you get started with Matrix and M<>M Relay.
+Completely new to Matrix? You'll want two accounts to use MMRelay, one for the bot and a personal account for yourself. Follow these steps to create your personal account.
 
 ## Setting Up Matrix
 
@@ -17,57 +17,4 @@ This guide will help you get started with Matrix and M<>M Relay.
 
 ## Setting Up M<>M Relay
 
-### Installation
-
-As of v1.0.0, M<>M Relay can be installed directly from PyPI:
-
-```bash
-# Install using pip
-pip install mmrelay
-
-# Or use pipx for isolated installation (recommended)
-pipx install mmrelay
-```
-
-### Configuration
-
-1. Create a configuration file:
-   ```bash
-   # Create the standard config directory
-   mkdir -p ~/.mmrelay
-   
-   # Copy the sample configuration
-   cp sample_config.yaml ~/.mmrelay/config.yaml
-   
-   # Edit the configuration file
-   nano ~/.mmrelay/config.yaml
-   ```
-
-2. Configure your Matrix credentials:
-   ```yaml
-   matrix:
-     homeserver: "https://matrix.org"
-     username: "your_username"
-     password: "your_password"
-     room_ids:
-       - "#your-room:matrix.org"
-   ```
-
-3. Configure your Meshtastic connection:
-   ```yaml
-   meshtastic:
-     connection:
-       mode: "tcp"  # or "serial" or "ble"
-       host: "meshtastic.local"  # for TCP mode
-       # port: "/dev/ttyUSB0"  # for serial mode
-   ```
-
-### Running M<>M Relay
-
-Start the relay with:
-
-```bash
-mmrelay
-```
-
-For more detailed instructions, see the [Installation Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/INSTRUCTIONS.md).
+After your personal account is setup, continue with the [Installation Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/INSTRUCTIONS.md).
