@@ -16,9 +16,9 @@ pip install mmrelay
 pipx install mmrelay
 ```
 
-For detailed setup instructions, see the [Installation Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/INSTRUCTIONS.md).
+For detailed setup instructions, see the [Installation Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/docs/INSTRUCTIONS.md).
 
-If you're upgrading from a previous version, see the [Upgrade Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/UPGRADE_TO_V1.md).
+If you're upgrading from a previous version, see the [Upgrade Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/docs/UPGRADE_TO_V1.md).
 
 ## Documentation
 

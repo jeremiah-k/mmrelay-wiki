@@ -17,4 +17,4 @@ Completely new to Matrix? You'll want two accounts to use MMRelay, one for the b
 
 ## Setting Up M<>M Relay
 
-After your personal account is setup, continue with the [Installation Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/INSTRUCTIONS.md).
+After your personal account is setup, continue with the [Installation Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/docs/INSTRUCTIONS.md).
