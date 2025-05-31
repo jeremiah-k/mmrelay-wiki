@@ -528,7 +528,6 @@ def bot_command(command, event):
 9. **Use Standardized Data Storage**: Store plugin data in the standardized locations:
    - For structured data: Use the database methods (`store_node_data()`, `get_node_data()`, etc.)
    - For files and binary data: Use `self.get_plugin_data_dir()` to get the plugin's data directory
-10. **Initialize Plugin Name Properly**: Always initialize `self.plugin_name` in the `__init__` method **before** calling `super().__init__()`, even though it's also defined as a class variable. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for a detailed explanation.
 
 ## Example Configuration
 
@@ -539,17 +538,25 @@ community-plugins:
   gpxtracker:
     active: true
     repository: https://github.com/jeremiah-k/MMR-GPXTRacker.git
-    # Use either tag or branch:
-    tag: v1.0.0  # For a specific tag
-    # OR
-    branch: main  # For a specific branch
-    # Optional custom data directory:
+    tag: v1.0.0  # Use tag for specific versions
+    # OR use branch for development:
+    # branch: main
+
+    # Plugin-specific configuration options:
     gpx_directory: "~/my_gpx_files"  # Custom directory for GPX files
-    # Optional plugin-specific configuration:
     allowed_device_ids:
       - "*"  # Allow all devices
-    # Optional priority setting:
-    priority: 50  # Default is 100, lower numbers run first
+    priority: 50  # Lower numbers run first (default: 100)
+```
+
+For core plugins, the configuration is simpler:
+
+```yaml
+plugins:
+  ping:
+    active: true
+    channels: [0, 1, 2]  # Specific channels, or omit for all mapped channels
+    priority: 10
 ```
 
 ## Next Steps
