@@ -1,5 +1,3 @@
-> ⚠️ **Important Note for Existing Plugin Authors**: If you are updating an old plugin, check your `__init__()` method order. The order of operations is critical - you must set `self.plugin_name` **before** calling `super().__init__()`. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for details.
-
 Welcome to the M<>M Relay plugin development guide! This document will get you started with writing plugins for the relay system. It covers setting up a development environment, understanding the `BasePlugin` class, and creating your first plugin. This guide is here to help you extend the relay's functionality with custom plugins tailored to your specific needs.
 
 ## Changes in v1.0
@@ -49,8 +47,6 @@ Plugins in M<>M Relay are Python classes that extend what the relay can do. All 
 
 The `BasePlugin` is designed to provide a consistent interface for all plugins. Here's a quick look at some of its important features:
 
-> ⚠️ **Critical Note**: When creating a plugin, you must set `self.plugin_name` **before** calling `super().__init__()` in your `__init__` method. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for details.
-
 -   **Logging**: Each plugin has its own logger (`self.logger`) to help with tracking actions and debugging.
 -   **Data Storage**: Methods like `store_node_data()`, `get_node_data()`, and `delete_node_data()` let plugins persistently store data specific to nodes.
 -   **Message Handling**: Plugins can react to incoming messages from Meshtastic or Matrix by implementing specific methods.
@@ -87,12 +83,6 @@ from mmrelay.matrix_utils import bot_command
 class Plugin(BasePlugin):
     plugin_name = "simple_responder"
 
-    def __init__(self):
-        # IMPORTANT: Set plugin_name BEFORE calling super().__init__()
-        # See "Plugin Name Initialization: A Critical Detail" section for explanation
-        self.plugin_name = "simple_responder"
-        super().__init__()
-
     async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
         if "decoded" in packet and "text" in packet["decoded"]:
             message = packet["decoded"]["text"].strip()
@@ -116,7 +106,7 @@ class Plugin(BasePlugin):
 
 This example avoids complexities of channel and DM handling. It uses the `bot_command` function from `matrix_utils.py` to check if the message is a command directed at the bot, and `connect_meshtastic` from `meshtastic_utils.py` to send a message to the mesh network.
 
-Notice that we define `plugin_name` twice: once as a class variable and once in the `__init__` method. This is important because the instance methods (like `handle_meshtastic_message`) use `self.plugin_name`, which needs to be initialized in `__init__`. Without this initialization, commands that use `self.plugin_name` in f-strings (like `f"!{self.plugin_name}"`) won't work correctly.
+Notice how simple this is - just define `plugin_name` as a class variable and implement the two required methods. The `BasePlugin` handles all the initialization automatically.
 
 ### Step 3: Activate the Plugin in Your Configuration
 
@@ -170,12 +160,6 @@ from mmrelay.plugins.base_plugin import BasePlugin
 class Plugin(BasePlugin):
     plugin_name = "hello_world"
 
-    def __init__(self):
-        # IMPORTANT: Set plugin_name BEFORE calling super().__init__()
-        # See "Plugin Name Initialization: A Critical Detail" section for explanation
-        self.plugin_name = "hello_world"
-        super().__init__()
-
     async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
         self.logger.debug("Hello world, Meshtastic")
         return False  # Indicate that we did not handle the message
@@ -187,44 +171,20 @@ class Plugin(BasePlugin):
 
 Activate this plugin in your `config.yaml` just like you did with the `simple_responder` plugin.
 
-## Plugin Name Initialization: A Critical Detail
+## Legacy Plugin Support
 
-You might have noticed that in both examples, we define `plugin_name` twice: once as a class variable and once in the `__init__` method. This isn't redundant—it's actually crucial for proper plugin operation.
+If you're updating an existing plugin that uses the older initialization pattern, it will continue to work. The older pattern looks like this:
 
-### Initialization Order Matters
-
-The order of operations in your plugin's `__init__` method is critical:
-
-1. **FIRST**: Set `self.plugin_name`
-2. **THEN**: Call `super().__init__()`
-
-This is because `BasePlugin.__init__()` relies on `self.plugin_name` being set before it runs. If you call `super().__init__()` first, and then assign `self.plugin_name` afterward, the parent constructor runs without knowledge of the plugin's name, which causes failures in command recognition and plugin registration.
-
-### Why This Is Important
-
-When your plugin uses `self.plugin_name` in instance methods (like checking for commands with `f"!{self.plugin_name}"` in message text), it needs to be properly initialized in the `__init__` method. Without this initialization, commands won't be recognized correctly.
-
-For example, in the weather plugin, this check:
-```python
-if f"!{self.plugin_name}" not in message.lower():
-    return False
-```
-
-Would fail silently if `self.plugin_name` wasn't initialized in `__init__` before calling `super().__init__()`, causing the plugin to ignore valid commands.
-
-### The Correct Pattern
-
-Always follow this pattern in your plugins:
 ```python
 class Plugin(BasePlugin):
-    plugin_name = "your_plugin_name"  # Class variable for compatibility
+    plugin_name = "my_plugin"
 
     def __init__(self):
-        self.plugin_name = "your_plugin_name"  # Must match the class variable
-        super().__init__()  # Call parent constructor AFTER setting plugin_name
+        self.plugin_name = "my_plugin"  # Set before calling super()
+        super().__init__()
 ```
 
-This ensures your plugin will correctly process commands and work as expected. The class-level attribute defines a default for the class, but `BasePlugin.__init__()` operates at the instance level and reads `self.plugin_name`. Setting it inside `__init__()` before calling `super().__init__()` ensures correct behavior at the instance level.
+However, for new plugins, the simplified approach shown in the examples above is recommended.
 
 ## Useful Functions from Other Modules
 
@@ -411,7 +371,6 @@ class Plugin(BasePlugin):
     plugin_name = "my_plugin"
 
     def __init__(self):
-        self.plugin_name = "my_plugin"
         super().__init__()
 
         # Get the plugin's data directory
