@@ -324,41 +324,35 @@ MMRelay provides two main methods for plugins to store data:
 `BasePlugin` provides easy-to-use methods for saving and retrieving plugin-specific data in the SQLite database:
 
 ```python
-# Store data for a specific node
-self.store_node_data(meshtastic_id, node_data)
+# Store data for a specific node (appends to existing data)
+self.store_node_data(meshtastic_id, {"temperature": 25.5, "timestamp": "2024-01-01"})
 
-# Set data for a specific node (replaces existing data)
-self.set_node_data(meshtastic_id, node_data)
+# Replace all data for a specific node
+self.set_node_data(meshtastic_id, [{"temperature": 25.5}])
+
+# Get data for a specific node
+node_data = self.get_node_data(meshtastic_id)  # Returns a list
+
+# Get all data for this plugin across all nodes
+all_data = self.get_data()
 
 # Delete data for a specific node
 self.delete_node_data(meshtastic_id)
-
-# Get data for a specific node
-node_data = self.get_node_data(meshtastic_id)
-
-# Get all data for this plugin
-all_data = self.get_data()
 ```
 
-This is ideal for storing configuration settings, user preferences, or small amounts of structured data.
+This is ideal for storing telemetry data, user preferences, or tracking information that you need to query later.
 
 #### File System Storage
 
-For larger files or binary data, MMRelay provides a standardized directory structure:
-
-```
-~/.mmrelay/data/plugins/<plugin_name>/
-```
-
-The `BasePlugin` class provides a method to get this directory:
+For larger files or binary data, MMRelay provides a standardized directory structure at `~/.mmrelay/data/plugins/<plugin_name>/`. The `BasePlugin` class provides a method to get this directory:
 
 ```python
-# Get the plugin's data directory
+# Get the plugin's data directory (~/.mmrelay/data/plugins/my_plugin/)
 data_dir = self.get_plugin_data_dir()
 
-# Get a subdirectory within the plugin's data directory
-# This will create the subdirectory if it doesn't exist
-subdir = self.get_plugin_data_dir('my_subdirectory')
+# Get a subdirectory (creates it if it doesn't exist)
+images_dir = self.get_plugin_data_dir('images')
+logs_dir = self.get_plugin_data_dir('logs')
 ```
 
 ##### Example: Storing Files
@@ -424,11 +418,10 @@ def start(self):
 
 ### Handling Meshtastic-Specific Commands
 
-You can create specific commands for handling messages from the Meshtastic network. Modify `handle_meshtastic_message()` to parse commands from Meshtastic nodes.
-
-**Example Using Existing Functions**:
+You can create specific commands for handling messages from the Meshtastic network. Here's a practical example that shows proper channel and DM handling:
 
 ```python
+import asyncio
 from mmrelay.meshtastic_utils import connect_meshtastic
 
 async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
@@ -440,36 +433,30 @@ async def handle_meshtastic_message(self, packet, formatted_message, longname, m
 
         # Determine if the message is a direct message
         toId = packet.get("to")
-        myId = meshtastic_client.myInfo.my_node_num  # Relay's own node number
+        myId = meshtastic_client.myInfo.my_node_num
+        is_direct_message = (toId == myId)
 
-        if toId == myId:
-            is_direct_message = True
-        else:
-            is_direct_message = False
-
+        # Check if this plugin should respond on this channel/DM
         if not self.is_channel_enabled(channel, is_direct_message=is_direct_message):
             return False
 
-        if message == "!ping":
-            # Wait for the response delay
+        if message.lower() == "!status":
+            # Respect the response delay to avoid overwhelming the mesh
             await asyncio.sleep(self.get_response_delay())
 
+            response = f"System status: OK. Nodes online: {len(meshtastic_client.nodes)}"
             fromId = packet.get("fromId")
 
             if is_direct_message:
-                # Respond via DM
-                meshtastic_client.sendText(
-                    text="pong",
-                    destinationId=fromId,
-                )
+                # Send DM response
+                meshtastic_client.sendText(text=response, destinationId=fromId)
             else:
-                # Respond in the same channel
-                meshtastic_client.sendText(
-                    text="pong",
-                    channelIndex=channel,
-                )
-            return True  # Indicate that we handled the message
-    return False  # Indicate that we did not handle the message
+                # Send channel response
+                meshtastic_client.sendText(text=response, channelIndex=channel)
+
+            return True  # We handled this message
+
+    return False  # We didn't handle this message
 ```
 
 **Note on Response Delay**: If your plugin automatically responds to mesh commands, respect the `plugin_response_delay` configuration option. It's set globally under `meshtastic` in `config.yaml`. Retrieve it using `self.get_response_delay()` and apply it before sending your response, as shown above. This helps manage network traffic and prevents overwhelming the mesh network.
