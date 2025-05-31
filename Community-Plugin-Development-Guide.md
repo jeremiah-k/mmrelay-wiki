@@ -1,6 +1,6 @@
-> ⚠️ **Important Note for Existing Plugin Authors**: If you are updating an old plugin, check your `__init__()` method order. The order of operations is critical - you must set `self.plugin_name` **before** calling `super().__init__()`. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for details.
+Welcome to the M<>M Relay plugin development guide! This document will get you started with writing plugins for the relay system. Whether you want to add weather reports, track telemetry data, or create custom commands, this guide will show you how to extend the relay's functionality with your own plugins.
 
-Welcome to the M<>M Relay plugin development guide! This document will get you started with writing plugins for the relay system. It covers setting up a development environment, understanding the `BasePlugin` class, and creating your first plugin. This guide is here to help you extend the relay's functionality with custom plugins tailored to your specific needs.
+We'll cover everything from setting up your development environment to creating and deploying your first plugin. The examples are practical and ready to use, so you can start building right away.
 
 ## Changes in v1.0
 
@@ -43,13 +43,18 @@ To develop plugins for M<>M Relay, you'll need:
 
 ## Understanding the Plugin System
 
-Plugins in M<>M Relay are Python classes that extend what the relay can do. All plugins inherit from a shared base class called `BasePlugin`. This class provides essential methods and utilities for message handling, logging, and data persistence. By using `BasePlugin` as your starting point, you can create plugins that interact with either the Meshtastic meshnet, Matrix rooms, or both.
+Plugins in M<>M Relay are Python classes that extend what the relay can do. Think of them as mini-applications that can:
+
+- Respond to commands from Meshtastic devices or Matrix rooms
+- Store and retrieve data about nodes and users
+- Send automated responses or notifications
+- Process telemetry data and generate reports
+
+All plugins inherit from a shared base class called `BasePlugin`, which provides the essential tools you need: logging, data storage, message handling, and configuration management.
 
 ### Structure of the Base Plugin
 
 The `BasePlugin` is designed to provide a consistent interface for all plugins. Here's a quick look at some of its important features:
-
-> ⚠️ **Critical Note**: When creating a plugin, you must set `self.plugin_name` **before** calling `super().__init__()` in your `__init__` method. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for details.
 
 -   **Logging**: Each plugin has its own logger (`self.logger`) to help with tracking actions and debugging.
 -   **Data Storage**: Methods like `store_node_data()`, `get_node_data()`, and `delete_node_data()` let plugins persistently store data specific to nodes.
@@ -87,12 +92,6 @@ from mmrelay.matrix_utils import bot_command
 class Plugin(BasePlugin):
     plugin_name = "simple_responder"
 
-    def __init__(self):
-        # IMPORTANT: Set plugin_name BEFORE calling super().__init__()
-        # See "Plugin Name Initialization: A Critical Detail" section for explanation
-        self.plugin_name = "simple_responder"
-        super().__init__()
-
     async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
         if "decoded" in packet and "text" in packet["decoded"]:
             message = packet["decoded"]["text"].strip()
@@ -116,7 +115,7 @@ class Plugin(BasePlugin):
 
 This example avoids complexities of channel and DM handling. It uses the `bot_command` function from `matrix_utils.py` to check if the message is a command directed at the bot, and `connect_meshtastic` from `meshtastic_utils.py` to send a message to the mesh network.
 
-Notice that we define `plugin_name` twice: once as a class variable and once in the `__init__` method. This is important because the instance methods (like `handle_meshtastic_message`) use `self.plugin_name`, which needs to be initialized in `__init__`. Without this initialization, commands that use `self.plugin_name` in f-strings (like `f"!{self.plugin_name}"`) won't work correctly.
+Notice how simple this is - just define `plugin_name` as a class variable and implement the two required methods. The `BasePlugin` handles all the initialization automatically.
 
 ### Step 3: Activate the Plugin in Your Configuration
 
@@ -170,12 +169,6 @@ from mmrelay.plugins.base_plugin import BasePlugin
 class Plugin(BasePlugin):
     plugin_name = "hello_world"
 
-    def __init__(self):
-        # IMPORTANT: Set plugin_name BEFORE calling super().__init__()
-        # See "Plugin Name Initialization: A Critical Detail" section for explanation
-        self.plugin_name = "hello_world"
-        super().__init__()
-
     async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
         self.logger.debug("Hello world, Meshtastic")
         return False  # Indicate that we did not handle the message
@@ -187,44 +180,20 @@ class Plugin(BasePlugin):
 
 Activate this plugin in your `config.yaml` just like you did with the `simple_responder` plugin.
 
-## Plugin Name Initialization: A Critical Detail
+## Legacy Plugin Support
 
-You might have noticed that in both examples, we define `plugin_name` twice: once as a class variable and once in the `__init__` method. This isn't redundant—it's actually crucial for proper plugin operation.
+If you're updating an existing plugin that uses the older initialization pattern, it will continue to work. The older pattern looks like this:
 
-### Initialization Order Matters
-
-The order of operations in your plugin's `__init__` method is critical:
-
-1. **FIRST**: Set `self.plugin_name`
-2. **THEN**: Call `super().__init__()`
-
-This is because `BasePlugin.__init__()` relies on `self.plugin_name` being set before it runs. If you call `super().__init__()` first, and then assign `self.plugin_name` afterward, the parent constructor runs without knowledge of the plugin's name, which causes failures in command recognition and plugin registration.
-
-### Why This Is Important
-
-When your plugin uses `self.plugin_name` in instance methods (like checking for commands with `f"!{self.plugin_name}"` in message text), it needs to be properly initialized in the `__init__` method. Without this initialization, commands won't be recognized correctly.
-
-For example, in the weather plugin, this check:
-```python
-if f"!{self.plugin_name}" not in message.lower():
-    return False
-```
-
-Would fail silently if `self.plugin_name` wasn't initialized in `__init__` before calling `super().__init__()`, causing the plugin to ignore valid commands.
-
-### The Correct Pattern
-
-Always follow this pattern in your plugins:
 ```python
 class Plugin(BasePlugin):
-    plugin_name = "your_plugin_name"  # Class variable for compatibility
+    plugin_name = "my_plugin"
 
     def __init__(self):
-        self.plugin_name = "your_plugin_name"  # Must match the class variable
-        super().__init__()  # Call parent constructor AFTER setting plugin_name
+        self.plugin_name = "my_plugin"  # Set before calling super()
+        super().__init__()
 ```
 
-This ensures your plugin will correctly process commands and work as expected. The class-level attribute defines a default for the class, but `BasePlugin.__init__()` operates at the instance level and reads `self.plugin_name`. Setting it inside `__init__()` before calling `super().__init__()` ensures correct behavior at the instance level.
+However, for new plugins, the simplified approach shown in the examples above is recommended.
 
 ## Useful Functions from Other Modules
 
@@ -364,41 +333,35 @@ MMRelay provides two main methods for plugins to store data:
 `BasePlugin` provides easy-to-use methods for saving and retrieving plugin-specific data in the SQLite database:
 
 ```python
-# Store data for a specific node
-self.store_node_data(meshtastic_id, node_data)
+# Store data for a specific node (appends to existing data)
+self.store_node_data(meshtastic_id, {"temperature": 25.5, "timestamp": "2024-01-01"})
 
-# Set data for a specific node (replaces existing data)
-self.set_node_data(meshtastic_id, node_data)
+# Replace all data for a specific node
+self.set_node_data(meshtastic_id, [{"temperature": 25.5}])
+
+# Get data for a specific node
+node_data = self.get_node_data(meshtastic_id)  # Returns a list
+
+# Get all data for this plugin across all nodes
+all_data = self.get_data()
 
 # Delete data for a specific node
 self.delete_node_data(meshtastic_id)
-
-# Get data for a specific node
-node_data = self.get_node_data(meshtastic_id)
-
-# Get all data for this plugin
-all_data = self.get_data()
 ```
 
-This is ideal for storing configuration settings, user preferences, or small amounts of structured data.
+This is ideal for storing telemetry data, user preferences, or tracking information that you need to query later.
 
 #### File System Storage
 
-For larger files or binary data, MMRelay provides a standardized directory structure:
-
-```
-~/.mmrelay/data/plugins/<plugin_name>/
-```
-
-The `BasePlugin` class provides a method to get this directory:
+For larger files or binary data, MMRelay provides a standardized directory structure at `~/.mmrelay/data/plugins/<plugin_name>/`. The `BasePlugin` class provides a method to get this directory:
 
 ```python
-# Get the plugin's data directory
+# Get the plugin's data directory (~/.mmrelay/data/plugins/my_plugin/)
 data_dir = self.get_plugin_data_dir()
 
-# Get a subdirectory within the plugin's data directory
-# This will create the subdirectory if it doesn't exist
-subdir = self.get_plugin_data_dir('my_subdirectory')
+# Get a subdirectory (creates it if it doesn't exist)
+images_dir = self.get_plugin_data_dir('images')
+logs_dir = self.get_plugin_data_dir('logs')
 ```
 
 ##### Example: Storing Files
@@ -411,7 +374,6 @@ class Plugin(BasePlugin):
     plugin_name = "my_plugin"
 
     def __init__(self):
-        self.plugin_name = "my_plugin"
         super().__init__()
 
         # Get the plugin's data directory
@@ -465,11 +427,10 @@ def start(self):
 
 ### Handling Meshtastic-Specific Commands
 
-You can create specific commands for handling messages from the Meshtastic network. Modify `handle_meshtastic_message()` to parse commands from Meshtastic nodes.
-
-**Example Using Existing Functions**:
+You can create specific commands for handling messages from the Meshtastic network. Here's a practical example that shows proper channel and DM handling:
 
 ```python
+import asyncio
 from mmrelay.meshtastic_utils import connect_meshtastic
 
 async def handle_meshtastic_message(self, packet, formatted_message, longname, meshnet_name):
@@ -481,36 +442,30 @@ async def handle_meshtastic_message(self, packet, formatted_message, longname, m
 
         # Determine if the message is a direct message
         toId = packet.get("to")
-        myId = meshtastic_client.myInfo.my_node_num  # Relay's own node number
+        myId = meshtastic_client.myInfo.my_node_num
+        is_direct_message = (toId == myId)
 
-        if toId == myId:
-            is_direct_message = True
-        else:
-            is_direct_message = False
-
+        # Check if this plugin should respond on this channel/DM
         if not self.is_channel_enabled(channel, is_direct_message=is_direct_message):
             return False
 
-        if message == "!ping":
-            # Wait for the response delay
+        if message.lower() == "!status":
+            # Respect the response delay to avoid overwhelming the mesh
             await asyncio.sleep(self.get_response_delay())
 
+            response = f"System status: OK. Nodes online: {len(meshtastic_client.nodes)}"
             fromId = packet.get("fromId")
 
             if is_direct_message:
-                # Respond via DM
-                meshtastic_client.sendText(
-                    text="pong",
-                    destinationId=fromId,
-                )
+                # Send DM response
+                meshtastic_client.sendText(text=response, destinationId=fromId)
             else:
-                # Respond in the same channel
-                meshtastic_client.sendText(
-                    text="pong",
-                    channelIndex=channel,
-                )
-            return True  # Indicate that we handled the message
-    return False  # Indicate that we did not handle the message
+                # Send channel response
+                meshtastic_client.sendText(text=response, channelIndex=channel)
+
+            return True  # We handled this message
+
+    return False  # We didn't handle this message
 ```
 
 **Note on Response Delay**: If your plugin automatically responds to mesh commands, respect the `plugin_response_delay` configuration option. It's set globally under `meshtastic` in `config.yaml`. Retrieve it using `self.get_response_delay()` and apply it before sending your response, as shown above. This helps manage network traffic and prevents overwhelming the mesh network.
@@ -569,7 +524,6 @@ def bot_command(command, event):
 9. **Use Standardized Data Storage**: Store plugin data in the standardized locations:
    - For structured data: Use the database methods (`store_node_data()`, `get_node_data()`, etc.)
    - For files and binary data: Use `self.get_plugin_data_dir()` to get the plugin's data directory
-10. **Initialize Plugin Name Properly**: Always initialize `self.plugin_name` in the `__init__` method **before** calling `super().__init__()`, even though it's also defined as a class variable. See [Plugin Name Initialization: A Critical Detail](#plugin-name-initialization-a-critical-detail) for a detailed explanation.
 
 ## Example Configuration
 
@@ -580,17 +534,25 @@ community-plugins:
   gpxtracker:
     active: true
     repository: https://github.com/jeremiah-k/MMR-GPXTRacker.git
-    # Use either tag or branch:
-    tag: v1.0.0  # For a specific tag
-    # OR
-    branch: main  # For a specific branch
-    # Optional custom data directory:
+    tag: v1.0.0  # Use tag for specific versions
+    # OR use branch for development:
+    # branch: main
+
+    # Plugin-specific configuration options:
     gpx_directory: "~/my_gpx_files"  # Custom directory for GPX files
-    # Optional plugin-specific configuration:
     allowed_device_ids:
       - "*"  # Allow all devices
-    # Optional priority setting:
-    priority: 50  # Default is 100, lower numbers run first
+    priority: 50  # Lower numbers run first (default: 100)
+```
+
+For core plugins, the configuration is simpler:
+
+```yaml
+plugins:
+  ping:
+    active: true
+    channels: [0, 1, 2]  # Specific channels, or omit for all mapped channels
+    priority: 10
 ```
 
 ## Next Steps
