@@ -2,7 +2,7 @@
 
 With the release of v1.0, community plugins may need to be updated to work with the new package structure. If you're a plugin user, check with the plugin developer for updated versions.
 
-For plugin developers, please see the [Community Plugin Development Guide](Community-Plugin-Development-Guide.md) for information on updating your plugins for v1.0.
+For plugin developers, please see the [Community Plugin Development Guide](Community-Plugin-Development-Guide) for information on updating your plugins for v1.0.
 
 ## Available Plugins
 
