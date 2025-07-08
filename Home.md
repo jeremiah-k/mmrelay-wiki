@@ -32,7 +32,7 @@ make run      # Start the container
 make logs     # View logs
 ```
 
-For detailed setup instructions, see the [Installation Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/docs/INSTRUCTIONS.md) or [Docker Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/DOCKER.md).
+For detailed setup instructions, see the [Installation Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/docs/INSTRUCTIONS.md) or [Docker Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/docs/DOCKER.md).
 
 If you're upgrading from a previous version, see the [Upgrade Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/docs/UPGRADE_TO_V1.md).
 
