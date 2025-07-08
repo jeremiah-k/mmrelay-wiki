@@ -17,4 +17,12 @@ Completely new to Matrix? You'll want two accounts to use MMRelay, one for the b
 
 ## Setting Up M<>M Relay
 
-After your personal account is setup, continue with the [Installation Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/docs/INSTRUCTIONS.md).
+After your personal account is setup, you have two main installation options:
+
+### Traditional Installation
+Continue with the [Installation Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/docs/INSTRUCTIONS.md) for pip/pipx installation.
+
+### Docker Installation (Recommended for Easy Deployment)
+For containerized deployment with automatic dependency management, see the [Docker Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/DOCKER.md).
+
+Docker provides isolated environment, easy updates, and consistent deployment across different systems.

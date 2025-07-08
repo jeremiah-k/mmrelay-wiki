@@ -6,7 +6,9 @@ A powerful and easy-to-use relay between Meshtastic devices and Matrix chat room
 
 ## Installation
 
-As of v1.0.0, M<>M Relay can be installed directly from PyPI:
+As of v1.1.0, M<>M Relay can be installed directly from PyPI or run with Docker:
+
+### Traditional Installation
 
 ```bash
 # Install using pip
@@ -16,7 +18,21 @@ pip install mmrelay
 pipx install mmrelay
 ```
 
-For detailed setup instructions, see the [Installation Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/docs/INSTRUCTIONS.md).
+### Docker Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/geoffwhittington/meshtastic-matrix-relay.git
+cd meshtastic-matrix-relay
+
+# Quick setup with Docker
+make setup    # Copy config and open editor (first time)
+make build    # Build the Docker image
+make run      # Start the container
+make logs     # View logs
+```
+
+For detailed setup instructions, see the [Installation Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/docs/INSTRUCTIONS.md) or [Docker Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/DOCKER.md).
 
 If you're upgrading from a previous version, see the [Upgrade Guide](https://github.com/geoffwhittington/meshtastic-matrix-relay/blob/main/docs/UPGRADE_TO_V1.md).
 
@@ -26,7 +42,6 @@ If you're upgrading from a previous version, see the [Upgrade Guide](https://git
 - [Community Plugins](Community-Plugin-List.md)
 - [Plugin Development](Community-Plugin-Development-Guide.md)
 - [Getting Started with Matrix](Getting-Started-With-Matrix-&-MM-Relay.md)
-- [Third-Party Projects](Third-Party-Projects.md)
 
 ## Key Concepts
 
@@ -49,6 +64,8 @@ This software application relays messages between Meshtastic devices and Matrix 
 - **Bidirectional communication**
 - **Multiple mesh networks**
 - **Serial, TCP, and BLE connections**
+- **Docker deployment** with official support and automated builds
+- **Smart connection detection** with configurable heartbeat monitoring
 - **Message truncation** to fit Meshtastic's payload size
 - **Custom fields** for identifying the sender and mesh network in Matrix messages
 - **Plugin system** for extending functionality
