@@ -34,113 +34,32 @@ With the release of v1.0, there are some important changes to plugin development
 
 ## Message Queue System (v1.1+)
 
-Starting with v1.1, MMRelay includes a sophisticated message queue system that provides rate limiting and ordered message delivery to prevent overwhelming the Meshtastic network. This system is transparent to plugin developers but offers important benefits and considerations:
+Starting with v1.1, MMRelay includes a message queue system that automatically handles rate limiting to prevent overwhelming the Meshtastic network. **The good news: your existing plugin code works exactly the same!**
 
-### Key Benefits
+### What This Means for Plugin Developers
 
-- **Rate Limiting**: Messages are automatically rate-limited with a configurable delay (default: 2.2 seconds, minimum: 2.0 seconds due to firmware constraints)
-- **FIFO Ordering**: Messages are sent in the order they were queued, ensuring predictable delivery
-- **Connection Awareness**: The queue automatically pauses during connection issues and resumes when connectivity is restored
-- **Memory Management**: Built-in queue size limits (100 messages max) prevent memory issues during high traffic
-- **Thread Safety**: Safe for use in multi-threaded environments with proper locking mechanisms
-
-### How It Works
-
-When your plugin sends a message to Meshtastic (using `meshtastic_client.sendText()` or `meshtastic_client.sendData()`), the message is automatically queued and sent at the appropriate rate. The queue system:
-
-1. **Queues messages** in memory with metadata (timestamp, description, mapping info)
-2. **Processes messages** in FIFO order with rate limiting
-3. **Handles errors** gracefully with proper logging and recovery
-4. **Manages connection state** by checking connectivity before sending
-5. **Provides feedback** through logging when queue backlogs occur
-
-### Plugin Development Considerations
-
-#### Sending Messages
-Your existing plugin code continues to work unchanged:
+**Your code doesn't need to change.** When you call:
 
 ```python
-# This still works exactly as before
-meshtastic_client = connect_meshtastic()
 meshtastic_client.sendText(text="Hello from plugin!", channelIndex=0)
 ```
 
-The message queue system operates transparently - your `sendText()` and `sendData()` calls are automatically queued and rate-limited.
+The message is automatically:
+- Queued in the correct order
+- Rate-limited (sent with appropriate delays)
+- Handled gracefully if there are connection issues
 
-#### Response Delays
-The message queue system makes the traditional `plugin_response_delay` less critical, but it's still recommended for plugins that send automatic responses:
+### Response Delays
+
+The `plugin_response_delay` setting is still recommended for plugins that send automatic responses:
 
 ```python
-# Still recommended for automatic responses
+# Still a good practice for automatic responses
 await asyncio.sleep(self.get_response_delay())
 meshtastic_client.sendText(text=response, channelIndex=channel)
 ```
 
-#### Queue Status Awareness
-For advanced plugins that need to be aware of queue status, you can access queue information:
-
-```python
-from mmrelay.message_queue import get_message_queue
-
-# Get current queue size
-queue = get_message_queue()
-queue_size = queue.get_queue_size()
-
-if queue_size > 5:
-    self.logger.warning(f"Message queue is backed up with {queue_size} messages")
-```
-
-#### Error Handling
-The queue system provides robust error handling, but plugins should still handle their own errors:
-
-```python
-try:
-    meshtastic_client.sendText(text="Hello!", channelIndex=0)
-    self.logger.debug("Message queued successfully")
-except Exception as e:
-    self.logger.error(f"Failed to queue message: {e}")
-```
-
-### Configuration
-
-The message queue system can be configured in `config.yaml`:
-
-```yaml
-meshtastic:
-  message_delay: 2.2  # Minimum delay between messages (seconds)
-  # Other meshtastic settings...
-```
-
-### Logging Changes
-
-With the queue system, you'll see different log messages:
-
-- **Normal operation**: `Relaying message from User to radio broadcast`
-- **Queue backlog**: `Relaying message from User to radio broadcast (queued: 3 messages)`
-- **Queue processing**: Debug-level logs show internal queue operations
-
-This provides clear visibility into message flow without overwhelming the logs.
-
-### Detection Sensor Support
-
-The message queue system fully supports detection sensor messages, which use binary data instead of text. If your plugin needs to send detection sensor data:
-
-```python
-# Send detection sensor data (binary)
-sensor_data = b"Motion detected at sensor 1"
-meshtastic_client.sendData(
-    data=sensor_data,
-    channelIndex=0,
-    portNum=meshtastic.protobuf.portnums_pb2.PortNum.DETECTION_SENSOR_APP
-)
-```
-
-Detection sensor messages:
-- Are automatically queued and rate-limited like text messages
-- Use `sendData()` instead of `sendText()`
-- Require the `DETECTION_SENSOR_APP` port number
-- Are not stored in the message map (no reply/reaction support)
-- Must be enabled in configuration (`detection_sensor: true`)
+This helps prevent multiple plugins from responding simultaneously and overwhelming the mesh network.
 
 ## Prerequisites
 
@@ -560,21 +479,18 @@ async def handle_meshtastic_message(self, packet, formatted_message, longname, m
             return False
 
         if message.lower() == "!status":
-            # With the message queue system, response delays are less critical
-            # but still recommended for automatic responses
+            # Respect the response delay to avoid overwhelming the mesh
             await asyncio.sleep(self.get_response_delay())
 
             response = f"System status: OK. Nodes online: {len(meshtastic_client.nodes)}"
             fromId = packet.get("fromId")
 
             if is_direct_message:
-                # Send DM response - automatically queued and rate-limited
+                # Send DM response
                 meshtastic_client.sendText(text=response, destinationId=fromId)
-                self.logger.debug(f"Queued DM response to {fromId}")
             else:
-                # Send channel response - automatically queued and rate-limited
+                # Send channel response
                 meshtastic_client.sendText(text=response, channelIndex=channel)
-                self.logger.debug(f"Queued channel response to channel {channel}")
 
             return True  # We handled this message
 
@@ -637,9 +553,7 @@ def bot_command(command, event):
 9. **Use Standardized Data Storage**: Store plugin data in the standardized locations:
    - For structured data: Use the database methods (`store_node_data()`, `get_node_data()`, etc.)
    - For files and binary data: Use `self.get_plugin_data_dir()` to get the plugin's data directory
-10. **Trust the Message Queue**: Don't implement your own rate limiting or queuing - the message queue system handles this automatically. Simply call `sendText()` or `sendData()` and let the system manage delivery.
-11. **Monitor Queue Status**: For plugins that send many messages, consider checking queue status to avoid overwhelming the system during high traffic periods.
-12. **Handle Queue Errors Gracefully**: While the queue system is robust, always wrap message sending in try-catch blocks to handle any unexpected errors.
+10. **Trust the Message Queue**: Don't implement your own rate limiting - the system handles this automatically. Simply call `sendText()` and let the system manage delivery timing.
 
 ## Example Configuration
 
