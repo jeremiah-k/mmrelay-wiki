@@ -67,6 +67,6 @@ The Map plugin displays mesh radio nodes on a world map. Node locations are rand
 
 ## Creating Your Own Plugins
 
-We encourage users to contribute their own plugins. See the [Community Plugin Development Guide](Community-Plugin-Development-Guide.md) for details.
+We encourage users to contribute their own plugins. See the [Plugin Development Guide](Plugin-Development-Guide.md) for details.
 
 For a list of available community plugins, see the [Community Plugin List](Community-Plugin-List.md).

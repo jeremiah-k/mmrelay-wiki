@@ -1,4 +1,4 @@
-Welcome to the M<>M Relay plugin development guide! This document will get you started with writing plugins for the relay system. Whether you want to add weather reports, track telemetry data, or create custom commands, this guide will show you how to extend the relay's functionality with your own plugins.
+Welcome to the M<>M Relay Plugin Development Guide! This document will get you started with writing plugins for the relay system. Whether you want to add weather reports, track telemetry data, or create custom commands, this guide will show you how to extend the relay's functionality with your own plugins.
 
 We'll cover everything from setting up your development environment to creating and deploying your first plugin. The examples are practical and ready to use, so you can start building right away.
 
@@ -31,6 +31,116 @@ With the release of v1.0, there are some important changes to plugin development
 - **Automatic Dependency Installation**: The plugin system now automatically detects and installs dependencies from requirements.txt files, with support for both pip and pipx installations.
 
 - **Improved Error Handling**: Better error messages and logging for plugin loading issues, with specific guidance for resolving dependency problems.
+
+## Message Queue System (v1.1+)
+
+Starting with v1.1, MMRelay includes a sophisticated message queue system that provides rate limiting and ordered message delivery to prevent overwhelming the Meshtastic network. This system is transparent to plugin developers but offers important benefits and considerations:
+
+### Key Benefits
+
+- **Rate Limiting**: Messages are automatically rate-limited with a configurable delay (default: 2.2 seconds, minimum: 2.0 seconds due to firmware constraints)
+- **FIFO Ordering**: Messages are sent in the order they were queued, ensuring predictable delivery
+- **Connection Awareness**: The queue automatically pauses during connection issues and resumes when connectivity is restored
+- **Memory Management**: Built-in queue size limits (100 messages max) prevent memory issues during high traffic
+- **Thread Safety**: Safe for use in multi-threaded environments with proper locking mechanisms
+
+### How It Works
+
+When your plugin sends a message to Meshtastic (using `meshtastic_client.sendText()` or `meshtastic_client.sendData()`), the message is automatically queued and sent at the appropriate rate. The queue system:
+
+1. **Queues messages** in memory with metadata (timestamp, description, mapping info)
+2. **Processes messages** in FIFO order with rate limiting
+3. **Handles errors** gracefully with proper logging and recovery
+4. **Manages connection state** by checking connectivity before sending
+5. **Provides feedback** through logging when queue backlogs occur
+
+### Plugin Development Considerations
+
+#### Sending Messages
+Your existing plugin code continues to work unchanged:
+
+```python
+# This still works exactly as before
+meshtastic_client = connect_meshtastic()
+meshtastic_client.sendText(text="Hello from plugin!", channelIndex=0)
+```
+
+The message queue system operates transparently - your `sendText()` and `sendData()` calls are automatically queued and rate-limited.
+
+#### Response Delays
+The message queue system makes the traditional `plugin_response_delay` less critical, but it's still recommended for plugins that send automatic responses:
+
+```python
+# Still recommended for automatic responses
+await asyncio.sleep(self.get_response_delay())
+meshtastic_client.sendText(text=response, channelIndex=channel)
+```
+
+#### Queue Status Awareness
+For advanced plugins that need to be aware of queue status, you can access queue information:
+
+```python
+from mmrelay.message_queue import get_message_queue
+
+# Get current queue size
+queue = get_message_queue()
+queue_size = queue.get_queue_size()
+
+if queue_size > 5:
+    self.logger.warning(f"Message queue is backed up with {queue_size} messages")
+```
+
+#### Error Handling
+The queue system provides robust error handling, but plugins should still handle their own errors:
+
+```python
+try:
+    meshtastic_client.sendText(text="Hello!", channelIndex=0)
+    self.logger.debug("Message queued successfully")
+except Exception as e:
+    self.logger.error(f"Failed to queue message: {e}")
+```
+
+### Configuration
+
+The message queue system can be configured in `config.yaml`:
+
+```yaml
+meshtastic:
+  message_delay: 2.2  # Minimum delay between messages (seconds)
+  # Other meshtastic settings...
+```
+
+### Logging Changes
+
+With the queue system, you'll see different log messages:
+
+- **Normal operation**: `Relaying message from User to radio broadcast`
+- **Queue backlog**: `Relaying message from User to radio broadcast (queued: 3 messages)`
+- **Queue processing**: Debug-level logs show internal queue operations
+
+This provides clear visibility into message flow without overwhelming the logs.
+
+### Detection Sensor Support
+
+The message queue system fully supports detection sensor messages, which use binary data instead of text. If your plugin needs to send detection sensor data:
+
+```python
+# Send detection sensor data (binary)
+sensor_data = b"Motion detected at sensor 1"
+meshtastic_client.sendData(
+    data=sensor_data,
+    channelIndex=0,
+    portNum=meshtastic.protobuf.portnums_pb2.PortNum.DETECTION_SENSOR_APP
+)
+```
+
+Detection sensor messages:
+- Are automatically queued and rate-limited like text messages
+- Use `sendData()` instead of `sendText()`
+- Require the `DETECTION_SENSOR_APP` port number
+- Are not stored in the message map (no reply/reaction support)
+- Must be enabled in configuration (`detection_sensor: true`)
 
 ## Prerequisites
 
@@ -99,7 +209,7 @@ class Plugin(BasePlugin):
             if message == "!hello":
                 meshtastic_client = connect_meshtastic()
 
-                # Respond with a greeting
+                # Respond with a greeting - automatically queued and rate-limited
                 meshtastic_client.sendText(text="Hello from Meshtastic!", channelIndex=0)
                 return True  # Indicate that we handled the message
         return False  # Indicate that we did not handle the message
@@ -427,7 +537,7 @@ def start(self):
 
 ### Handling Meshtastic-Specific Commands
 
-You can create specific commands for handling messages from the Meshtastic network. Here's a practical example that shows proper channel and DM handling:
+You can create specific commands for handling messages from the Meshtastic network. Here's a practical example that shows proper channel and DM handling with the message queue system:
 
 ```python
 import asyncio
@@ -450,18 +560,21 @@ async def handle_meshtastic_message(self, packet, formatted_message, longname, m
             return False
 
         if message.lower() == "!status":
-            # Respect the response delay to avoid overwhelming the mesh
+            # With the message queue system, response delays are less critical
+            # but still recommended for automatic responses
             await asyncio.sleep(self.get_response_delay())
 
             response = f"System status: OK. Nodes online: {len(meshtastic_client.nodes)}"
             fromId = packet.get("fromId")
 
             if is_direct_message:
-                # Send DM response
+                # Send DM response - automatically queued and rate-limited
                 meshtastic_client.sendText(text=response, destinationId=fromId)
+                self.logger.debug(f"Queued DM response to {fromId}")
             else:
-                # Send channel response
+                # Send channel response - automatically queued and rate-limited
                 meshtastic_client.sendText(text=response, channelIndex=channel)
+                self.logger.debug(f"Queued channel response to channel {channel}")
 
             return True  # We handled this message
 
@@ -517,13 +630,16 @@ def bot_command(command, event):
 2. **Keep Plugins Modular**: Each plugin should handle a distinct piece of functionality for easier maintenance and debugging.
 3. **Avoid Blocking Operations**: The relay is asynchronous, so be careful not to use blocking calls that could delay message handling.
 4. **Respect Plugin Priorities**: Set plugin priorities appropriately by defining the `priority` attribute within your plugin class to control the order of message processing.
-5. **Handle Response Delays**: If your plugin sends automatic responses, use `await asyncio.sleep(self.get_response_delay())` to respect the globally configured response delay.
+5. **Handle Response Delays**: If your plugin sends automatic responses, use `await asyncio.sleep(self.get_response_delay())` to respect the globally configured response delay. With the message queue system, this is less critical but still recommended.
 6. **Manage Channel Responses**: Use `self.is_channel_enabled(channel, is_direct_message=is_direct_message)` to control where your plugin responds and ensure it handles DMs appropriately.
 7. **Use BasePlugin Matrix Methods**: Always use the `send_matrix_message()` method from `BasePlugin` for sending Matrix messages. This method handles client initialization and error checking automatically. Never call `connect_matrix()` directly, as this will reinitialize the client and cause unnecessary credential reloading.
 8. **Leverage Existing Functions**: Utilize functions from `matrix_utils.py`, `meshtastic_utils.py`, and `db_utils.py` to simplify your plugin code and maintain consistency.
 9. **Use Standardized Data Storage**: Store plugin data in the standardized locations:
    - For structured data: Use the database methods (`store_node_data()`, `get_node_data()`, etc.)
    - For files and binary data: Use `self.get_plugin_data_dir()` to get the plugin's data directory
+10. **Trust the Message Queue**: Don't implement your own rate limiting or queuing - the message queue system handles this automatically. Simply call `sendText()` or `sendData()` and let the system manage delivery.
+11. **Monitor Queue Status**: For plugins that send many messages, consider checking queue status to avoid overwhelming the system during high traffic periods.
+12. **Handle Queue Errors Gracefully**: While the queue system is robust, always wrap message sending in try-catch blocks to handle any unexpected errors.
 
 ## Example Configuration
 

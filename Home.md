@@ -40,7 +40,7 @@ If you're upgrading from a previous version, see the [Upgrade Guide](https://git
 
 - [Core Plugins](Core-Plugins.md)
 - [Community Plugins](Community-Plugin-List.md)
-- [Plugin Development](Community-Plugin-Development-Guide.md)
+- [Plugin Development](Plugin-Development-Guide.md)
 - [Getting Started with Matrix](Getting-Started-With-Matrix-&-MM-Relay.md)
 
 ## Key Concepts

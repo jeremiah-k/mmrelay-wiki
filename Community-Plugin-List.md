@@ -5,4 +5,4 @@
 
 ## Contributing
 
-If you're interested in contributing, check out the [Community Plugin Development Guide](Community-Plugin-Development-Guide). We'd be happy to list your plugin here!
+If you're interested in contributing, check out the [Plugin Development Guide](Plugin-Development-Guide). We'd be happy to list your plugin here!
