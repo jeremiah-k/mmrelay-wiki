@@ -6,7 +6,7 @@ A powerful and easy-to-use relay between Meshtastic devices and Matrix chat room
 
 ## Installation
 
-As of v1.1.0, M<>M Relay can be installed directly from PyPI or run with Docker:
+M<>M Relay can be installed directly from PyPI or run with Docker:
 
 ### Traditional Installation
 

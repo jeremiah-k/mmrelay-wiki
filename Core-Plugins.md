@@ -18,7 +18,7 @@ _Note: The `mesh_relay` plugin is experimental and needs more work before it's f
 
 ## Plugin Locations
 
-As of v1.0.0, plugins are stored in standardized locations:
+Plugins are stored in standardized locations:
 
 - **Core Plugins**: Included in the package
 - **Custom Plugins**: `~/.mmrelay/plugins/custom/`
